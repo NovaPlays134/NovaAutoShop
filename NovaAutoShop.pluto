@@ -1,0 +1,1470 @@
+util.require_natives("2944a", "g")
+local scriptsDir = filesystem.scripts_dir()
+local filePathsTable = {
+    $"{scriptsDir}/lib/NovaAutoShop",
+    $"{scriptsDir}/lib/NovaAutoShop/TimeFolder",
+    $"{scriptsDir}/lib/NovaAutoShop/TimeFolder/lastcheckTime.txt",
+}
+
+
+for filePathsTable as filePath do
+    if not filesystem.exists(filePath) then
+        if string.lfind(filePath, ".txt") then
+            local file = io.open(filePath, "w")
+            if file then
+                file:write(tostring(util.current_time_millis()))
+                file:close()
+            end
+        else
+            filesystem.mkdir(filePath)
+        end
+    end
+end
+
+util.keep_running()
+
+local updatorTable = {
+    lastCheckTime = nil,
+    dayInMilis = 864,
+}
+
+--AUTO UPDATOR--
+local function hasInternetAccess()
+    return not async_http.have_access()
+end
+
+local function writeTimeToFile(filePath)
+    local file = io.open(filePath, "w")
+    if file then
+        file:write(tostring(util.current_time_millis()))
+    end
+end
+
+local function GetLastCheckTime(filePath)
+    local file = io.open(filePath, "r")
+    if file then
+        local lastCheckTime = file:read("*a")
+        file:close()
+        if lastCheckTime != "" then
+            return util.current_time_millis() - tonumber(lastCheckTime)
+        end
+    end
+    return nil
+end
+
+local function checkForUpdate(filePath)
+    local file = io.open(filePath, "r")
+    updatorTable.lastcheckTime = GetLastCheckTime(filePath)
+    if updatorTable.lastcheckTime >= updatorTable.dayInMilis then
+        return true
+    end
+    return false
+end
+
+local function AutoUpdate()
+    if hasInternetAccess() then
+        util.toast("Cannot update because the script's internet access is disabled, to enable turn on internet access.")
+        return false
+    end
+    local lastcheckTimeFile = filePathsTable[3]
+    if checkForUpdate(lastcheckTimeFile) then
+        writeTimeToFile(lastcheckTimeFile)
+        util.toast(updatorTable.lastcheckTime)
+    end
+end
+AutoUpdate()
+
+----------
+--TABLES--
+----------
+local var = {
+    userPosition = nil,
+    userRotation = nil,
+    isFocusedOnVehicle = false,
+    createdVehicle = nil,
+    createdVehicles = {},
+    previewVehicleRot = 0,
+    createdCam = nil,
+    createdTuneVehicle = nil,
+    wheelSlider = nil,
+    wheelSlider2 = nil,
+    currentCamPosition = {x = 5, y = 6, z = 2.5},
+    camMoveduration = 300,
+    neonColorL = nil,
+    carSelected = false,
+    oneTimeLoaded = false,
+    wheelType = 0,
+    scriptsDir = filesystem.scripts_dir(),
+}
+
+local vehicleMaxMods = {
+    frontBumper = 0,
+    rearBumper = 0,
+    exhaust = 0,
+    grille = 0,
+    hood = 0,
+    livery = 0,
+    plateHolder = 0,
+    roofFins = 0,
+    roof = 0,
+    skirts = 0,
+    spoiler = 0,
+    sunstrips = 0,
+    bodywork = 0,
+    roof2 = 0,
+}
+
+local allOptions = {
+    tuningMode = nil,
+    spawnVehicle = nil,
+    divider = nil,
+    armorList = nil,
+    brakesList = nil,
+    engineList = nil,
+    hornList = nil,
+    lightsList = nil,
+    resprayList = nil,
+    suspensionList = nil,
+    transmissionList = nil,
+    turboList = nil,
+    wheelsList = nil,
+    windowTintList = nil,
+    plateList = nil,
+},
+
+local modOptions = {
+    frontBumpersList = {list = nil, option = nil, hasNoMods = false},
+    rearBumpersList = {list = nil, option = nil, hasNoMods = false},
+    bodyworkList = {list = nil, option = nil, hasNoMods = false},
+    exhaustList = {list = nil, option = nil, hasNoMods = false},
+    grilleList = {list = nil, option = nil, hasNoMods = false},
+    hoodList = {list = nil, option = nil, hasNoMods = false},
+    liveryList = {list = nil, option = nil, hasNoMods = false},
+    plateHolderList = {list = nil, option = nil, hasNoMods = false},
+    roofFinsList = {list = nil, option = nil, hasNoMods = false},
+    roof1List = {list = nil, option = nil, hasNoMods = false},
+    roof2List = {list = nil, option = nil, hasNoMods = false},
+    skirtsList = {list = nil, option = nil, hasNoMods = false},
+    spoilerList = {list = nil, option = nil, hasNoMods = false},
+    sunstripsList = {list = nil, option = nil, hasNoMods = false},
+},
+
+--------------------
+--VEHICLE SETTINGS--
+--------------------
+local vehicleSettings = {
+    vehicle = nil,
+    armor = -1,
+    brakes = -1,
+    frontBumper = -1,
+    rearBumper = -1,
+    engine = -1,
+    exhaust = -1,
+    grille = -1,
+    hood = -1,
+    horn = -1,
+    headlights = -1,
+    neonLayout = {-1},
+    neonColor = {r = 255, g = 255, b = 255},
+    livery = -1,
+    plateColor = 0,
+    plateHolder = -1,
+    plateText = "",
+    primary = 0,
+    secondary = 0,
+    primaryPaintType = 0,
+    secondaryPaintType = 0,
+    roofFins = -1,
+    roof = -1,
+    skirts = -1,
+    spoiler = -1,
+    sunstrips = -1,
+    suspension = -1,
+    transmission = -1,
+    turbo = false,
+    bodywork = -1,
+    roof2 = -1,
+    wheelType = 0,
+    wheel = 0,
+    wheel2 = 0,
+    wheelColor = 0,
+    tireSmokeColor = {r = 255, g = 255, b = 255},
+    windowTint = 0,
+}
+
+local camPositions = {
+    ["default"] = {x = 5, y = 6, z = 2.5},
+    ["default2"] = {x = 4, y = 5, z = 2.5},
+    ["wheels"] = {x = 5, y = 3, z = 1},
+    ["frontHigh"] = {x = 0, y = 6.3, z = 2},
+    ["frontHighAngle"] = {x = 3.4, y = 5, z = 2},
+    ["frontLow"] = {x = 0, y = 6.3, z = 1},
+    ["frontLowAngle"] = {x = 2, y = 6.3, z = 1},
+    ["backTop"] = {x = 0, y = -5, z = 3},
+    ["backHighAngle"] = {x = -2, y = -6.3, z = 2},
+    ["backLow"] = {x = 0, y = -6.3, z = 1.5},
+    ["leftLow"] = {x = 4, y = 4, z = 1},
+}
+
+
+local LSCTable = {
+    armor = {
+        armorNames = {
+            {1, "None"},
+            {2, "Armor Upgrade 20%"},
+            {3, "Armor Upgrade 40%"},
+            {4, "Armor Upgrade 60%"},
+            {5, "Armor Upgrade 80%"},
+            {6, "Armor Upgrade 100%"},
+        },
+    },
+    brakes = {
+        brakeNames = {
+            {1, "Stock Brakes"},
+            {2, "Steet Brakes"},
+            {3, "Sport Brakes"},
+            {4, "Race Brakes"},
+        },
+    },
+    bumpers = {
+        frontBumperNames = {
+            {1, "Stock Font Bumper"},
+        },
+        rearBumperNames = {
+            {1, "Stock Rear Bumper"},
+        },
+    },
+    engine = {
+        engineNames = {
+            {1, "None"},
+            {2, "EMS Upgrade, Level 1"},
+            {3, "EMS Upgrade, Level 2"},
+            {4, "EMS Upgrade, Level 3"},
+            {5, "EMS Upgrade, Level 4"},
+        },
+    },
+    bodywork = {
+        bodyworkNames = {
+            {1, "Stock Bodywork"},
+        },
+    },
+    exhaust = {
+        exhaustNames = {
+            {1, "Stock Exhaust"},
+        },
+    },
+    grille = {
+        grilleNames = {
+            {1, "Stock Grille"},
+        },
+    },
+    hood = {
+        hoodNames = {
+            {1, "Stock Hood"},
+        },
+    },
+    horn = {
+        hornNames = {
+            standardHorns = {
+                {1, "Select Vehicle"},
+            },
+            musicalHorns = {
+                {1, "Select Vehicle"},
+            },
+            loopHorns = {
+                {1, "Select Vehicle"},
+            },
+            specialHorns = {
+                {1, "Select Vehicle"},
+            },
+        },
+
+        --credits for prism for helping me getting the labels--
+        horns = {
+            standardHorns = {
+                {label = "CMOD_HRN_0", index = -1},
+                {label = "CMOD_HRN_TRK", index = 0},
+                {label = "CMOD_HRN_COP", index = 1},
+                {label = "CMOD_HRN_CLO", index = 2},
+                {label = "CMOD_AIRHORN_01", index = 52},
+                {label = "CMOD_AIRHORN_02", index = 53},
+                {label = "CMOD_AIRHORN_03", index = 54},
+            },
+            musicalHorns = {
+                {label = "CMOD_HRN_0", index = -1},
+                {label = "HORN_HIPS1", index = 24},
+                {label = "HORN_HIPS2", index = 25},
+                {label = "HORN_HIPS3", index = 26},
+                {label = "HORN_CNOTE_C0", index = 16},
+                {label = "HORN_CNOTE_D0", index = 17},
+                {label = "HORN_CNOTE_E0", index = 18},
+                {label = "HORN_CNOTE_F0", index = 19},
+                {label = "HORN_CNOTE_G0", index = 20},
+                {label = "HORN_CNOTE_A0", index = 21},
+                {label = "HORN_CNOTE_B0", index = 22},
+                {label = "HORN_CNOTE_C1", index = 23},
+                {label = "HORN_CLAS1", index = 9},
+                {label = "HORN_CLAS2", index = 10},
+                {label = "HORN_CLAS3", index = 11},
+                {label = "HORN_CLAS4", index = 12},
+                {label = "HORN_CLAS5", index = 13},
+                {label = "HORN_CLAS6", index = 14},
+                {label = "HORN_CLAS7", index = 15},
+                {label = "HORN_LUXE1", index = 33},
+                {label = "CMOD_HRN_MUS1", index = 3},
+                {label = "CMOD_HRN_MUS2", index = 4},
+                {label = "CMOD_HRN_MUS3", index = 5},
+                {label = "CMOD_HRN_MUS4", index = 6},
+                {label = "CMOD_HRN_MUS5", index = 7},
+                {label = "CMOD_HRN_SAD", index = 8},
+            },
+            loopHorns = {
+                {label = "CMOD_HRN_0", index = -1},
+                {label = "HORN_HIPS1", index = 27},
+                {label = "HORN_LUXE2", index = 32},
+                {label = "HORN_LUXE3", index = 34},
+                {label = "HORN_LOWRDER1", index = 42},
+                {label = "HORN_LOWRDER2", index = 44},
+
+            },
+            specialHorns = {
+                {label = "CMOD_HRN_0", index = -1},
+                {label = "HORN_INDI_1", index = 28},
+                {label = "HORN_INDI_2", index = 29},
+                {label = "HORN_INDI_3", index = 30},
+                {label = "HORN_INDI_4", index = 31},
+                {label = "HORN_HWEEN1", index = 38},
+                {label = "HORN_HWEEN2", index = 40}, 
+                {label = "HORN_XM15_1", index = 46},
+                {label = "HORN_XM15_2", index = 47},
+                {label = "HORN_XM15_3", index = 48},
+            },
+        },
+    },
+    headlights = {
+        headlightNames = {       
+            {1, "White"},
+            {2, "Blue"},
+            {3, "Electric Blue"},
+            {4, "Mint Green"},
+            {5, "Lime Green"},
+            {6, "Yellow"},
+            {7, "Golden Shower"},
+            {8, "Orange"},
+            {9, "Red"},
+            {10, "Pony Pink"},
+            {11, "Hot Pink"},
+            {12, "Purple"},
+            {13, "Blacklight"},
+        }
+    },
+    neonKits = {
+        neonLayoutNames = {
+            {1, "None"},
+            {2, "Front"},
+            {3, "Back"},
+            {4, "Sides"},
+            {5, "Front and Back"},
+            {6, "Front and Sides"},
+            {7, "Back and Sides"},
+            {8, "Front, Back and Sides"},
+        },
+        neonLayoutIndexs = {
+            {-1},
+            {2},
+            {3},
+            {0, 1},
+            {2, 3},
+            {2, 0, 1},
+            {3, 0, 1},
+            {0, 1, 2, 3},
+        },
+    },
+    livery = {
+        liveryNames = {
+            {1, "None"}
+        },
+    },
+    plate = {
+        plateColors = {
+            {1, "Blue/White"},
+            {2, "Yellow/Black"},
+            {3, "Yellow/Blue"},
+            {4, "Blue/White2"},
+            {5, "Blue/White3"},
+            {6, "Yankton"},
+        },
+        plateHolder = {
+            plateHolderNames = {
+                {1, "Default"}
+            },
+        },
+    },
+    paint = {
+        paintColors = {
+            {1, "Black"},
+            {2, "Carbon Black"},
+            {3, "Graphite"},
+            {4, "Anhracite Black"},
+            {5, "Black Steel"},
+            {6, "Dark Steel"},
+            {7, "Silver"},
+            {8, "Bluish Silver"},
+            {9, "Rolled Steel"},
+            {10, "Shadow Silver"},
+            {11, "Stone Silver"},
+            {12, "Midnight Silver"},
+            {13, "Cast Iron Silver"},
+            {14, "Red"},
+            {15, "Torino Red"},
+            {16, "Formula Red"},
+            {17, "Lava Red:"},
+            {18, "Blaze Red"},
+            {19, "Grace Red"},
+            {20, "Garnet Red"},
+            {21, "Sunset Red"},
+            {22, "Cabernet Red"},
+            {23, "Wine Red"},
+            {24, "Candy Red"},
+            {25, "Hot Pink"},
+            {26, "Pfsiter Pink"},
+            {27, "Salmon Pink"},
+            {28, "Sunrise Orange"},
+            {29, "Orange"},
+            {30, "Bright Orange"},
+            {31, "Gold"},
+            {32, "Bronze"},
+            {33, "Yellow"},
+            {34, "Race Yellow"},
+            {35, "Dew Yellow"},
+            {36, "Dark Green"},
+            {37, "Racing Green"},
+            {38, "Sea Green"},
+            {39, "Olive Green"},
+            {40, "Bright Green"},
+            {41, "Gasoline Green"},
+            {42, "Lime Green"},
+            {43, "Midnight Blue"},
+            {44, "Galaxy Blue"},
+            {45, "Dark Blue"},
+            {46, "Saxon Blue"},
+            {47, "Blue"},
+            {48, "Mariner Blue"},
+            {49, "Harbor Blue"},
+            {50, "Diamond Blue"},
+            {51, "Surf Blue"},
+            {52, "Nautical Blue"},
+            {53, "Racing Blue"},
+            {54, "Ultra Blue"},
+            {55, "Light Blue"},
+            {56, "Chocolate Brown"},
+            {57, "Bison Brown"},
+            {58, "Creeen Brown"},
+            {59, "Feltzer Brown"},
+            {60, "Maple Brown"},
+            {61, "Beechwood Brown"},
+            {62, "Sienna Brown"},
+            {63, "Saddle Brown"},
+            {64, "Moss Brown"},
+            {65, "Woodbeech Brown"},
+            {66, "Straw Brown"},
+            {67, "Sandy Brown"},
+            {68, "Bleached Brown"},
+            {69, "Schafter Purple"},
+            {70, "Spinnaker Purple"},
+            {71, "Midnight Purple"},
+            {72, "Bright Purple"},
+            {73, "Cream"},
+            {74, "Ice White"},
+            {75, "Frost White"},
+            {76, "Black"},
+            {77, "Gray"},
+            {78, "Light Gray"},
+            {79, "Ice White"},
+            {80, "Blue"},
+            {81, "Dark Blue"},
+            {82, "Midnight Blue"},
+            {83, "Midnight Purple"},
+            {84, "Schafter Purple"},
+            {85, "Red"},
+            {86, "Dark Red"},
+            {87, "Orange"},
+            {88, "Yellow"},
+            {89, "Lime Green"},
+            {90, "Green"},
+            {91, "Forest Green"},
+            {92, "Foliage Green"},
+            {93, "Olive Darb"},
+            {94, "Dark Earth"},
+            {95, "Desert Tan"},
+            {96, "Brushed Steel"},
+            {97, "Brushed Black Steel"},
+            {98, "Brushed Aluminum"},
+            {99, "Pure Gold"},
+            {100, "Brushed Gold"},
+            {101, "Chrome"},
+        },
+        paintColorsIndexs = {
+            0,
+            147,
+            1,
+            11,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            27,
+            28,
+            29,
+            150,
+            30,
+            31,
+            32,
+            33,
+            34,
+            143,
+            35,
+            135,
+            137,
+            136,
+            36,
+            38,
+            138,
+            99,
+            90,
+            88,
+            89,
+            91,
+            49,
+            50,
+            51,
+            52,
+            53,
+            54,
+            92,
+            141,
+            61,
+            62,
+            63,
+            64,
+            65,
+            66,
+            67,
+            68,
+            69,
+            73,
+            70,
+            74,
+            96,
+            101,
+            95,
+            94,
+            97,
+            103,
+            104,
+            98,
+            100,
+            102,
+            99,
+            105,
+            106,
+            71,
+            72,
+            142,
+            145,
+            107,
+            111,
+            112,
+            12,
+            13,
+            14,
+            131,
+            83,
+            82,
+            84,
+            149,
+            148,
+            39,
+            40,
+            41,
+            42,
+            55,
+            128,
+            151,
+            155,
+            152,
+            153,
+            154,
+            117,
+            118,
+            119,
+            158,
+            159,
+            120,
+        },
+        paintTypes = {
+            {1, "Normal"},
+            {2, "Metallic"},
+            {3, "Pearl"},
+            {4, "Matte"},
+            {5, "Metal"},
+            {6, "Chrome"},
+            {7, "Chameleon"},
+        },
+    },
+    roof = {
+        roofFinNames = {
+            {1, "None"},
+        },
+        roofNames = {
+            {1, "Stock Roof"},
+        },
+        roof2Names = {
+            {1, "Stock Roof"},
+        },
+    },
+    skirts = {
+        skirtNames = {
+            {1, "Stock Skirts"},
+        },
+    },
+    spoiler = {
+        spoilerNames = {
+            {1, "None"},
+        },
+    },
+    sunstrips = {
+        sunstripsNames = {
+            {1, "Default"},
+        },
+    },
+    suspension = {
+        suspensionNames = {
+            {1, "Stock Suspension"},
+            {2, "Lowered Suspension"},
+            {3, "Street Suspension"},
+            {4, "Sport Suspension"},
+            {5, "Competition Suspension"},
+        },
+    },
+    transmission = {
+        transmissionNames = {
+            {1, "Stock Transmission"},
+            {2, "Street Transmission"},
+            {3, "Sports Transmission"},
+            {4, "Race Transmission"},
+        },
+    },
+    turbo = {
+        turboNames = {
+            {1, "None"},
+            {2, "Turbo Tuning"},
+        },
+    },
+    wheels = {
+        wheelTypeNames = {
+            {1, "Sport"},
+            {2, "Muscle"},
+            {3, "Lowrider"},
+            {4, "SUV"},
+            {5, "Offroad"},
+            {6, "Tuner"},
+            {7, "Bike Wheels"},
+            {8, "High End"},
+            {9, "Benny's Originals"},
+            {10, "Benny's Bespoke"},
+            {11, "Racing"},
+            {12, "Street"},
+            {13, "Track"},
+        },
+        sliderMaxValue = {
+            39,
+            35,
+            29,
+            37,
+            34,
+            47,
+            47,
+            39,
+            472,
+            472,
+            139,
+            209,
+            209
+        },
+    },
+    windows = {
+        windowTintNames = {
+            {1, "None"},
+            {2, "Pure Black"},
+            {3, "Dark Smoke"},
+            {4, "Light Smoke"},
+            {5, "Stock"},
+            {6, "Limo"},
+            {7, "Green"},
+        },
+    },
+}
+-------------
+--FUNCTIONS--
+-------------
+--VEHICLE SPAWN VALUES--
+function vehicleSpawnValues(vehicle)
+    entities.set_upgrade_value(vehicle, 16, vehicleSettings.armor)
+    entities.set_upgrade_value(vehicle, 12, vehicleSettings.brakes)
+    entities.set_upgrade_value(vehicle, 1, vehicleSettings.frontBumper)
+    entities.set_upgrade_value(vehicle, 2, vehicleSettings.rearBumper)
+    entities.set_upgrade_value(vehicle, 8, vehicleSettings.bodywork)
+    entities.set_upgrade_value(vehicle, 11, vehicleSettings.engine)
+    entities.set_upgrade_value(vehicle, 4, vehicleSettings.exhaust)
+    entities.set_upgrade_value(vehicle, 6, vehicleSettings.grille)
+    entities.set_upgrade_value(vehicle, 7, vehicleSettings.hood)
+    entities.set_upgrade_value(vehicle, 14, vehicleSettings.horn)
+    SET_VEHICLE_XENON_LIGHT_COLOR_INDEX(vehicle, vehicleSettings.headlights) 
+
+    for i, index in vehicleSettings.neonLayout do
+        SET_VEHICLE_NEON_ENABLED(vehicle, index, true)
+    end
+
+    SET_VEHICLE_NEON_COLOUR(vehicle, vehicleSettings.neonColor.r, vehicleSettings.neonColor.g, vehicleSettings.neonColor.b)
+    entities.set_upgrade_value(vehicle, 48, vehicleSettings.livery)
+    SET_VEHICLE_NUMBER_PLATE_TEXT_INDEX(vehicle, vehicleSettings.plateColor)
+    entities.set_upgrade_value(vehicle, 25, vehicleSettings.plateHolder)
+    SET_VEHICLE_NUMBER_PLATE_TEXT(vehicle, vehicleSettings.plateText)
+    SET_VEHICLE_COLOURS(vehicle, vehicleSettings.primary, vehicleSettings.secondary)
+    SET_VEHICLE_COLOURS(vehicle, vehicleSettings.primary, vehicleSettings.secondary)
+    SET_VEHICLE_MOD_COLOR_1(vehicle, vehicleSettings.primaryPaintType, vehicleSettings.primary, 0)
+    SET_VEHICLE_MOD_COLOR_2(vehicle, vehicleSettings.secondaryPaintType, vehicleSettings.secondary)
+    entities.set_upgrade_value(vehicle, 5, vehicleSettings.roofFins)
+    entities.set_upgrade_value(vehicle, 10, vehicleSettings.roof)
+    entities.set_upgrade_value(vehicle, 9, vehicleSettings.roof2)
+    entities.set_upgrade_value(vehicle, 3, vehicleSettings.skirts)
+    entities.set_upgrade_value(vehicle, 0, vehicleSettings.spoiler)
+    entities.set_upgrade_value(vehicle, 27, vehicleSettings.sunstrips)
+    entities.set_upgrade_value(vehicle, 15, vehicleSettings.suspension)
+    entities.set_upgrade_value(vehicle, 13, vehicleSettings.transmission)
+    TOGGLE_VEHICLE_MOD(vehicle, 18, vehicleSettings.turbo)
+    SET_VEHICLE_WHEEL_TYPE(vehicle, vehicleSettings.wheelType)
+    entities.set_upgrade_value(vehicle, 23, vehicleSettings.wheel)
+    entities.set_upgrade_value(vehicle, 24, vehicleSettings.wheel2)
+    SET_VEHICLE_EXTRA_COLOURS(vehicle, 0, vehicleSettings.wheelColor)
+    TOGGLE_VEHICLE_MOD(vehicle, 20, true)
+    SET_VEHICLE_TYRE_SMOKE_COLOR(vehicle, vehicleSettings.tireSmokeColor.r, vehicleSettings.tireSmokeColor.g, vehicleSettings.tireSmokeColor.b)
+    SET_VEHICLE_WINDOW_TINT(vehicle, vehicleSettings.windowTint)
+end
+
+function getVehiclePartName(vehicle, modType, value)
+    local labelName = GET_MOD_TEXT_LABEL(vehicle, modType, value)
+    local name = GET_FILENAME_FOR_AUDIO_CONVERSATION(labelName) 
+    return name
+end
+
+--GET MOD INFO--
+function getVehicleModInfo(vehicle)
+    function keepFirstElementOnly(tbl)
+        for i = #tbl, 2, -1 do
+            table.remove(tbl, i)
+        end
+    end
+    local function addModInfo(modType, modTable, opt)
+        keepFirstElementOnly(modTable)
+        local maxMods = GET_NUM_VEHICLE_MODS(vehicle, modType) - 1
+        if maxMods > -1 then
+            modOptions[opt].hasNoMods = false
+            for i = 0, maxMods do
+                table.insert(modTable, {#modTable + 1, getVehiclePartName(vehicle, modType, i)})
+            end
+        else
+            modOptions[opt].hasNoMods = true
+        end
+    end
+
+    local function fillHornNames(hornType)
+        LSCTable.horn.hornNames[hornType] = {}
+        for i, tbl in LSCTable.horn.horns[hornType] do
+            table.insert(LSCTable.horn.hornNames[hornType], {#LSCTable.horn.hornNames[hornType] + 1, GET_FILENAME_FOR_AUDIO_CONVERSATION(tbl.label)})
+        end
+    end
+
+    addModInfo(1, LSCTable.bumpers.frontBumperNames, "frontBumpersList")
+    addModInfo(2, LSCTable.bumpers.rearBumperNames, "rearBumpersList")
+    addModInfo(8, LSCTable.bodywork.bodyworkNames, "bodyworkList")
+    addModInfo(4, LSCTable.exhaust.exhaustNames, "exhaustList")
+    addModInfo(6, LSCTable.grille.grilleNames, "grilleList")
+    addModInfo(7, LSCTable.hood.hoodNames, "hoodList")
+    addModInfo(48, LSCTable.livery.liveryNames, "liveryList")
+    addModInfo(25, LSCTable.plate.plateHolder.plateHolderNames, "plateHolderList")
+    addModInfo(5, LSCTable.roof.roofFinNames, "roofFinsList")
+    addModInfo(10, LSCTable.roof.roofNames, "roof1List")
+    addModInfo(9, LSCTable.roof.roof2Names, "roof2List")
+    addModInfo(3, LSCTable.skirts.skirtNames, "skirtsList")
+    addModInfo(0, LSCTable.spoiler.spoilerNames, "spoilerList")
+    addModInfo(27, LSCTable.sunstrips.sunstripsNames, "sunstripsList")
+
+    if not var.oneTimeLoaded then
+        fillHornNames("standardHorns")
+        fillHornNames("musicalHorns")
+        fillHornNames("loopHorns")
+        fillHornNames("specialHorns")
+
+        var.oneTimeLoaded = true
+    end
+
+    var.wheelType = GET_VEHICLE_WHEEL_TYPE(vehicle)
+end
+
+--PREVIEW VEHICLE--
+function PreviewVehicle(vehicle, create)
+    if create then
+        for i, vehicle in var.createdVehicles do
+            entities.delete_by_handle(vehicle)
+        end
+        var.createdVehicles = {}
+    
+        local vehicleHash = util.joaat(vehicle)
+        util.request_model(vehicleHash)
+        var.createdVehicle = entities.create_vehicle(vehicleHash, {x = 0, y = 0, z = 0}, 0)
+        table.insert(var.createdVehicles, var.createdVehicle)
+        FREEZE_ENTITY_POSITION(var.createdVehicle, true)
+        vehicleSpawnValues(var.createdVehicle)
+        getVehicleModInfo(var.createdVehicle)
+        return true
+    else
+        for i, vehicle in var.createdVehicles do
+            entities.delete_by_handle(vehicle)
+        end
+        if var.createdVehicle != nil then
+            entities.delete_by_handle(var.createdVehicle)
+            return false
+        end
+    end
+end
+
+--ALL VEHICLES LIST--
+function makeAllVehicleList(root, callback)
+    local mainList = root:list("Vehicle: None")
+    local allVehicles = util.get_vehicles()
+    local vehicles = util.get_vehicles()
+
+    table.sort(allVehicles, function(a, b)
+        if a.class != b.class then
+            return lang.get_string(a.class) < lang.get_string(b.class)
+        end
+        return a.name < b.name
+    end)
+
+    local currentClass, currentClassList
+    for allVehicles as vehicle do
+        if currentClass != vehicle.class then
+            currentClass = vehicle.class
+            currentClassList = mainList:list(vehicle.class)
+        end
+
+        local vehicleName = util.get_label_text(vehicle.name)
+        if vehicleName == "NULL" then
+            continue
+        end
+
+        local vehicleAction = currentClassList:action(util.get_label_text(vehicle.name), {}, "", function()
+            var.carSelected = true
+            mainList.menu_name = "Vehicle: " .. util.get_label_text(vehicle.name)
+            mainList:focus()
+            callback(vehicle.name)
+        end)
+
+        vehicleAction:onFocus(function()
+            var.isFocusedOnVehicle = true
+            PreviewVehicle(vehicle.name, true)
+        end)
+    
+        vehicleAction:onBlur(function()
+            var.isFocusedOnVehicle = false
+            PreviewVehicle(vehicle.name, false)
+        end)
+    end
+end
+
+--CAM OFFSET--
+function getOffsetFromGameplayCam(distance)
+	local cam_rot = GET_GAMEPLAY_CAM_ROT(0)
+	local cam_pos = GET_GAMEPLAY_CAM_COORD()
+	local direction = v3.toDir(cam_rot)
+	local destination = {
+        x = cam_pos.x + direction.x * distance,
+        y = cam_pos.y + direction.y * distance,
+        z = cam_pos.z + direction.z * distance
+	}
+	return destination
+end
+
+--LERP--
+function lerp(a, b, t)
+    return {
+        x = a.x + (b.x - a.x) * t,
+        y = a.y + (b.y - a.y) * t,
+        z = a.z + (b.z - a.z) * t
+    }
+end
+
+--MOVE CAMERA--
+function moveCamera(cam, coord1, coord2, entity)
+    local startTime = util.current_time_millis()
+
+    while true do
+        local currentTime = util.current_time_millis()
+        local elapsed = currentTime - startTime
+
+        if elapsed >= var.camMoveduration or coord1 == coord2 then
+            break
+        end
+        
+        local t = elapsed / var.camMoveduration
+        local currentPos = lerp(coord1, coord2, t)
+        var.currentCamPosition = {x = currentPos.x, y = currentPos.y, z = currentPos.z}
+        ATTACH_CAM_TO_ENTITY(cam, entity, currentPos.x, currentPos.y, currentPos.z, false)
+        POINT_CAM_AT_ENTITY(cam, entity, 0, 0, 0, true)
+        util.yield(1)
+    end
+end
+
+--CREATE CAM--
+local function createCam(entity, coords)
+    local cam = CREATE_CAM_WITH_PARAMS("DEFAULT_SCRIPTED_CAMERA", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, GET_GAMEPLAY_CAM_FOV(), false, false)
+    SET_CAM_ACTIVE(cam, true)
+    RENDER_SCRIPT_CAMS(true, true, 0, true, true, 0)
+    ATTACH_CAM_TO_ENTITY(cam, entity, camPositions["default"].x, camPositions["default"].y, camPositions["default"].z, false)
+    --ATTACH_CAM_TO_ENTITY(cam, entity, 0, 6.3, 2, false)
+    POINT_CAM_AT_ENTITY(cam, entity, 0, 0, 0, true)
+    return cam
+end
+
+--DELETE CAM--
+local function deleteCam(camera)
+    SET_CAM_ACTIVE(camera, false)
+	RENDER_SCRIPT_CAMS(false, false, 0, false, false, false)
+	DESTROY_CAM(camera, false)
+end
+
+--COLOR LIST 255RGB--
+function colorList(root, name, listvarName, callback)
+    local list = root:list(name)
+    var[listvarName] = list
+    local color = {r = 255, g = 255, b = 255}
+    list:slider("R", {name .. " R"}, "", 0, 255, color.r, 1, function(count)
+        color.r = count
+        callback(color)
+    end)
+    list:slider("G", {name .. " G"}, "", 0, 255, color.g, 1, function(count)
+        color.g = count
+        callback(color)
+    end)
+    list:slider("B", {name .. " B"}, "", 0, 255, color.b, 1, function(count)
+        color.b = count
+        callback(color)
+    end)
+    return list
+end
+
+--CHANGE CAM BASED OF OPT--
+local function setupFocusHandlers(opt, camPosName)
+    opt:onFocus(function()
+        moveCamera(var.createdCam, var.currentCamPosition, camPositions[camPosName], var.createdTuneVehicle)
+    end)
+end
+
+-----------
+--OPTIONS--
+-----------
+local root = menu.my_root()
+
+local safeVehicle = root:action("Safe Vehicle", {"safeVehicleName"}, "", function()
+    menu.show_command_box("safeVehicleName ")
+end, function(text)
+    local filePath = $"{var.scriptsDir}/lib/NovaAutoShop/{text}.txt"
+    local file = io.open(filePath, "w")
+    if file then
+        for key, value in vehicleSettings do
+            local line = key .. " = "
+            if type(value) == "table" then
+                line = line .. "{"
+                for value as v do
+                    line = line .. v .. ", "
+                end
+                line = string.sub(line, 1, -3)
+                line = line .. "}\n"
+            else
+                line = line  .. value .. "\n"
+            end
+            file:write(line)
+        end
+        file:close()
+    end
+end)
+
+function readSettingsFromFile(filePath)
+    local file = io.open(filePath, "r")
+    if file then
+        for line in file:lines() do
+            local key, value = line:match("([^%s]+)%s*=%s*(.+)")
+            
+            if key and value then
+                local numericValue = tonumber(value)
+                
+                if numericValue then
+                    vehicleSettings[key] = numericValue
+                elseif value == "true" or value == "false" then
+                    vehicleSettings[key] = value == "true"
+                elseif value:sub(1, 1) == "{" and value:sub(-1) == "}" then
+                    local tableValues = {}
+                    for v in value:sub(2, -2):gmatch("([^%s]+)") do
+                        table.insert(tableValues, tonumber(v) or v)
+                    end
+                    vehicleSettings[key] = tableValues
+                else
+                    vehicleSettings[key] = value
+                end
+            end
+        end
+        file:close()
+    end
+end
+
+local vehiclesFolderPath = $"{var.scriptsDir}/lib/NovaAutoShop"
+local savedVehicles = {}
+for filesystem.list_files(vehiclesFolderPath) as filePath do
+    if string.lfind(filePath, ".txt") then
+        local fileName = string.sub(string.match(filePath, "[/\\]([^/\\]+)$"), 1, -5)
+        table.insert(savedVehicles, {name = fileName, filePath = filePath})
+    end
+end
+
+local loadVehicleList = root:list("Load Vehicle")
+
+loadVehicleList:action("Open Folder", {}, "", function()
+    util.open_folder(vehiclesFolderPath)
+end)
+loadVehicleList:divider("")
+
+for i, file in savedVehicles do
+    loadVehicleList:action(file.name, {}, "", function()
+        readSettingsFromFile(file.filePath)
+        util.toast("Successfully loaded vehicle")
+    end)
+end
+
+makeAllVehicleList(root, function(vehicle)
+    vehicleSettings.vehicle = util.joaat(vehicle)
+end)
+
+
+allOptions.tuningMode = root:toggle("Tuning Mode", {}, "", function(on)
+    local cam, vehicle
+    if on then
+        var.userPosition = players.get_position(players.user())
+        var.userRotation = GET_ENTITY_ROTATION(players.user_ped(), 0)
+        var.createdTuneVehicle = entities.create_vehicle(vehicleSettings.vehicle, {x = -211.76971, y = -1323.8885, z = 30.05576}, 0)
+        local vehiclePosition = GET_ENTITY_COORDS(var.createdTuneVehicle, false)
+        FREEZE_ENTITY_POSITION(var.createdTuneVehicle, true)
+        SET_VEHICLE_ENGINE_ON(var.createdTuneVehicle, true, true, false)
+        TOGGLE_VEHICLE_MOD(var.createdTuneVehicle, 22, true)
+        SET_VEHICLE_LIGHTS(var.createdTuneVehicle, 3)
+        SET_VEHICLE_TAIL_LIGHTS(var.createdTuneVehicle, true)
+        SET_VEHICLE_MOD_KIT(var.createdTuneVehicle, 0)
+        SET_VEHICLE_DOORS_LOCKED(var.createdTuneVehicle, 4)
+        vehicleSpawnValues(var.createdTuneVehicle)
+        var.createdCam = createCam(var.createdTuneVehicle)
+        SET_PED_INTO_VEHICLE(players.user_ped(), var.createdTuneVehicle, -1)
+        SET_ENTITY_ALPHA(players.user_ped(), 0, true)
+
+        DISABLE_CONTROL_ACTION(0, 79, true)
+    else
+        deleteCam(var.createdCam)
+        entities.delete(var.createdTuneVehicle)
+        SET_ENTITY_COORDS(players.user_ped(), var.userPosition.x, var.userPosition.y, var.userPosition.z, false, false, false, false) 
+        SET_ENTITY_ROTATION(players.user_ped(), var.userRotation.x, var.userRotation.y, var.userRotation.z, 0, true)
+    end
+end)
+
+allOptions.spawnVehicle = root:action("Spawn Vehicle", {}, "", function()
+    local offset = GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(players.user_ped(), 0, 5, 0)
+    local vehicle = entities.create_vehicle(vehicleSettings.vehicle, offset, 0)
+    TOGGLE_VEHICLE_MOD(vehicle, 22, true)
+    SET_VEHICLE_MOD_KIT(vehicle, 0)
+    vehicleSpawnValues(vehicle)
+    local userRotation = GET_ENTITY_ROTATION(players.user_ped(), 0)
+    SET_ENTITY_ROTATION(vehicle, 0, 0, userRotation.z, 0, true)
+    SET_PED_INTO_VEHICLE(players.user_ped(), vehicle, -1)
+end)
+
+allOptions.divider = root:divider("")
+
+--ARMOR--
+allOptions.armorList = root:list_select("Armor", {}, "", LSCTable.armor.armorNames, 1, function(value)
+    vehicleSettings.armor = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 16, value - 2)
+end)
+setupFocusHandlers(allOptions.armorList, "default2")
+
+--BRAKES--
+allOptions.brakesList = root:list_select("Brakes", {}, "", LSCTable.brakes.brakeNames, 1, function(value)
+    vehicleSettings.brakes = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 12, value - 2)
+end)
+setupFocusHandlers(allOptions.brakesList, "default2")
+
+--BUMPERS--
+modOptions.frontBumpersList.list = root:list("Bumpers")
+setupFocusHandlers(modOptions.frontBumpersList.list, "frontLowAngle")
+
+modOptions.frontBumpersList.option = modOptions.frontBumpersList.list:list_select("Front Bumpers", {}, "", LSCTable.bumpers.frontBumperNames, 1, function(value)
+    vehicleSettings.frontBumper = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 1, value - 2)
+end)
+setupFocusHandlers(modOptions.frontBumpersList.option, "frontLowAngle")
+modOptions.rearBumpersList.option = modOptions.frontBumpersList.list:list_select("Rear Bumpers", {}, "", LSCTable.bumpers.rearBumperNames, 1, function(value)
+    vehicleSettings.rearBumper = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 2, value - 2)
+end)
+setupFocusHandlers(modOptions.rearBumpersList.option, "backHighAngle")
+
+--BODYWORK--
+modOptions.bodyworkList.option = root:list_select("Bodywork", {}, "", LSCTable.bodywork.bodyworkNames, 1, function(value)
+    vehicleSettings.bodywork = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 8, value - 2)
+end)
+setupFocusHandlers(modOptions.bodyworkList.option, "default2")
+
+--ARMOR--
+allOptions.engineList = root:list_select("Engine", {}, "", LSCTable.engine.engineNames, 1, function(value)
+    vehicleSettings.engine = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 11, value - 2)
+end)
+setupFocusHandlers(allOptions.engineList, "default2")
+
+--EXHAUST--
+modOptions.exhaustList.option = root:list_select("Exhaust", {}, "", LSCTable.exhaust.exhaustNames, 1, function(value)
+    vehicleSettings.exhaust = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 4, value - 2)
+end)
+setupFocusHandlers(modOptions.exhaustList.option, "backLow")
+
+--GRILLE--
+modOptions.grilleList.option = root:list_select("Grille", {}, "", LSCTable.grille.grilleNames, 1, function(value)
+    vehicleSettings.grille = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 6, value - 2)
+end)
+setupFocusHandlers(modOptions.grilleList.option, "frontHigh")
+
+--HOOD--
+modOptions.hoodList.option = root:list_select("Hood", {}, "", LSCTable.hood.hoodNames, 1, function(value)
+    vehicleSettings.hood = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 7, value - 2)
+end)
+setupFocusHandlers(modOptions.hoodList.option, "frontHigh")
+
+--HORNS--
+allOptions.hornList = root:list("Horn")
+setupFocusHandlers(allOptions.hornList, "default2")
+
+local standardHornList = allOptions.hornList:list_select("Standard", {}, "", LSCTable.horn.hornNames.standardHorns, 1, function(value)
+    vehicleSettings.horn = LSCTable.horn.horns.standardHorns[value].index
+    entities.set_upgrade_value(var.createdTuneVehicle, 14, LSCTable.horn.horns.standardHorns[value].index)
+end)
+
+local musicalHornList = allOptions.hornList:list_select("Musical", {}, "", LSCTable.horn.hornNames.musicalHorns, 1, function(value)
+    vehicleSettings.horn = LSCTable.horn.horns.musicalHorns[value].index
+    entities.set_upgrade_value(var.createdTuneVehicle, 14, LSCTable.horn.horns.musicalHorns[value].index)
+end)
+
+local loopHornList = allOptions.hornList:list_select("Loop", {}, "", LSCTable.horn.hornNames.loopHorns, 1, function(value)
+    vehicleSettings.horn = LSCTable.horn.horns.loopHorns[value].index
+    entities.set_upgrade_value(var.createdTuneVehicle, 14, LSCTable.horn.horns.loopHorns[value].index)
+end)
+
+local specialHornList = allOptions.hornList:list_select("Special", {}, "", LSCTable.horn.hornNames.specialHorns, 1, function(value)
+    vehicleSettings.horn = LSCTable.horn.horns.specialHorns[value].index
+    entities.set_upgrade_value(var.createdTuneVehicle, 14, LSCTable.horn.horns.specialHorns[value].index)
+end)
+
+--LIGHTS--
+allOptions.lightsList = root:list("Lights")
+setupFocusHandlers(allOptions.lightsList, "default2")
+
+local headlightsList = allOptions.lightsList:list_select("Headlights", {}, "", LSCTable.headlights.headlightNames, 1, function(value)
+    vehicleSettings.headlights = value - 1
+    SET_VEHICLE_XENON_LIGHT_COLOR_INDEX(var.createdTuneVehicle, value - 1) 
+end)
+setupFocusHandlers(headlightsList, "frontHigh")
+
+local neonKitsList = allOptions.lightsList:list("Neon Kits")
+setupFocusHandlers(neonKitsList, "frontHighAngle")
+
+local neonLayoutList = neonKitsList:list_select("Neon Layout", {}, "", LSCTable.neonKits.neonLayoutNames, 1, function(value)
+    vehicleSettings.neonLayout = LSCTable.neonKits.neonLayoutIndexs[value]
+    for i = 0, 3 do
+        SET_VEHICLE_NEON_ENABLED(var.createdTuneVehicle, i, false)
+    end
+
+    if value != 1 then
+        for i, index in LSCTable.neonKits.neonLayoutIndexs[value] do
+            SET_VEHICLE_NEON_ENABLED(var.createdTuneVehicle, index, true)
+        end
+    end
+
+    SET_VEHICLE_NEON_COLOUR(var.createdTuneVehicle, vehicleSettings.neonColor.r, vehicleSettings.neonColor.g, vehicleSettings.neonColor.b)
+end)
+setupFocusHandlers(neonLayoutList, "frontHighAngle")
+
+local neonColorList = colorList(neonKitsList, "Neon Color", "neonColor", function(color)
+    vehicleSettings.neonColor = color
+    SET_VEHICLE_NEON_COLOUR(var.createdTuneVehicle, color.r, color.g, color.b)
+end)
+setupFocusHandlers(neonColorList, "frontHighAngle")
+
+
+--LIVERY--
+modOptions.liveryList.option = root:list_select("Livery", {}, "", LSCTable.livery.liveryNames, 1, function(value)
+    vehicleSettings.livery = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 48, value - 2)
+end)
+setupFocusHandlers(modOptions.liveryList.option, "default2")
+
+--PLATE--
+allOptions.plateList = root:list("Plate")
+setupFocusHandlers(allOptions.plateList, "backLow")
+
+local plateColorList = allOptions.plateList:list_select("Plate Color", {}, "", LSCTable.plate.plateColors, 1, function(value)
+    vehicleSettings.plateColor = value - 1
+    SET_VEHICLE_NUMBER_PLATE_TEXT_INDEX(var.createdTuneVehicle, value - 1)
+end)
+
+modOptions.plateHolderList.option = allOptions.plateList:list_select("Plate Holder", {}, "", LSCTable.plate.plateHolder.plateHolderNames, 1, function(value)
+    vehicleSettings.plateHolder = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 25, value - 2)
+end)
+
+local plateTextOpt = allOptions.plateList:action("Plate Text", {"SPlateText"}, "Sets the vehicle's plate text (only 8 characters will show)", function()
+    menu.show_command_box("SPlateText ")
+end, function(text)
+    vehicleSettings.plateText = text
+    SET_VEHICLE_NUMBER_PLATE_TEXT(var.createdTuneVehicle, text)
+end)
+
+--RESPRAY--
+allOptions.resprayList = root:list("Respray")
+setupFocusHandlers(allOptions.resprayList, "default2")
+
+local primaryColorList = allOptions.resprayList:list_select("Primary Color", {}, "", LSCTable.paint.paintColors, 1, function(value)
+    vehicleSettings.primary = LSCTable.paint.paintColorsIndexs[value]
+    SET_VEHICLE_COLOURS(var.createdTuneVehicle, LSCTable.paint.paintColorsIndexs[value], vehicleSettings.secondary)
+end)
+
+local secondaryColorList = allOptions.resprayList:list_select("Secondary Color", {}, "", LSCTable.paint.paintColors, 1, function(value)
+    vehicleSettings.secondary = LSCTable.paint.paintColorsIndexs[value]
+    SET_VEHICLE_COLOURS(var.createdTuneVehicle, vehicleSettings.primary, LSCTable.paint.paintColorsIndexs[value])
+end)
+
+local primaryPaintTypeList = allOptions.resprayList:list_select("Primary Paint Type", {}, "", LSCTable.paint.paintTypes, 1, function(value)
+    vehicleSettings.primaryPaintType = value - 1
+    SET_VEHICLE_MOD_COLOR_1(var.createdTuneVehicle, value - 1, vehicleSettings.primary, 0)
+end)
+
+local secondaryPaintTypeList = allOptions.resprayList:list_select("Secondary Paint Type", {}, "", LSCTable.paint.paintTypes, 1, function(value)
+    vehicleSettings.secondaryPaintType = value - 1
+    SET_VEHICLE_MOD_COLOR_2(var.createdTuneVehicle, value - 1, vehicleSettings.secondary)
+end)
+
+--ROOF--
+modOptions.roofFinsList.list = root:list("Roof")
+setupFocusHandlers(modOptions.roofFinsList.list, "backTop")
+
+modOptions.roofFinsList.option = modOptions.roofFinsList.list:list_select("Roof Fins", {}, "", LSCTable.roof.roofFinNames, 1, function(value)
+    vehicleSettings.roofFins = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 5, value - 2)
+end)
+
+modOptions.roof1List.option = modOptions.roofFinsList.list:list_select("Roof", {}, "", LSCTable.roof.roofNames, 1, function(value)
+    vehicleSettings.roof = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 10, value - 2)
+end)
+
+modOptions.roof2List.option = modOptions.roofFinsList.list:list_select("Roof 2", {}, "", LSCTable.roof.roof2Names, 1, function(value)
+    vehicleSettings.roof2 = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 9, value - 2)
+end)
+
+--SKIRTS--
+modOptions.skirtsList.option = root:list_select("Skirts", {}, "", LSCTable.skirts.skirtNames, 1, function(value)
+    vehicleSettings.skirts = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 3, value - 2)
+end)
+setupFocusHandlers(modOptions.skirtsList.option, "leftLow")
+
+--SPOILER--
+modOptions.spoilerList.option = root:list_select("Spoiler", {}, "", LSCTable.spoiler.spoilerNames, 1, function(value)
+    vehicleSettings.spoiler = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 0, value - 2)
+end)
+setupFocusHandlers(modOptions.spoilerList.option, "backHighAngle")
+
+--SUNSTRIPS--
+modOptions.sunstripsList.option = root:list_select("Sunstrips", {}, "", LSCTable.sunstrips.sunstripsNames, 1, function(value)
+    vehicleSettings.sunstrips = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 27, value - 2)
+end)
+setupFocusHandlers(modOptions.sunstripsList.option, "frontHighAngle")
+
+--SUSPENSION--
+allOptions.suspensionList = root:list_select("Suspension", {}, "", LSCTable.suspension.suspensionNames, 1, function(value)
+    vehicleSettings.suspension = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 15, value - 2)
+end)
+setupFocusHandlers(allOptions.suspensionList, "leftLow")
+
+--TRANSMISSION--
+allOptions.transmissionList = root:list_select("Transmission", {}, "", LSCTable.transmission.transmissionNames, 1, function(value)
+    vehicleSettings.transmission = value - 2
+    entities.set_upgrade_value(var.createdTuneVehicle, 13, value - 2)
+end)
+setupFocusHandlers(allOptions.transmissionList, "leftLow")
+
+--TURBO--
+allOptions.turboList = root:list_select("Turbo", {}, "", LSCTable.turbo.turboNames, 1, function(value)
+    vehicleSettings.turbo = value != 1
+    TOGGLE_VEHICLE_MOD(var.createdTuneVehicle, 18, vehicleSettings.turbo)
+end)
+setupFocusHandlers(allOptions.turboList, "leftLow")
+
+--WHEELS--
+allOptions.wheelsList = root:list("Wheels")
+setupFocusHandlers(allOptions.wheelsList, "leftLow")
+
+local wheelTypeList = allOptions.wheelsList:list_select("Wheel Type", {}, "", LSCTable.wheels.wheelTypeNames, 1, function(value)
+    vehicleSettings.wheelType = value - 1
+    SET_VEHICLE_WHEEL_TYPE(var.createdTuneVehicle, value - 1)
+
+    var.wheelSlider.max_value = LSCTable.wheels.sliderMaxValue[value]
+    entities.set_upgrade_value(var.createdTuneVehicle, 23, var.wheelSlider.value)
+
+    var.wheelSlider2.max_value = LSCTable.wheels.sliderMaxValue[value]
+    entities.set_upgrade_value(var.createdTuneVehicle, 24, var.wheelSlider2.value)
+end)
+
+var.wheelSlider = allOptions.wheelsList:slider("Wheel", {}, "Changes based of the wheel type you have selected.", -1, -1, -1, 1, function(value)
+    vehicleSettings.wheel = value
+    entities.set_upgrade_value(var.createdTuneVehicle, 23, value)
+end)
+
+var.wheelSlider2 = allOptions.wheelsList:slider("Wheel (only for motocycles)", {}, "Changes based of the wheel type you have selected.", -1, -1, -1, 1, function(value)
+    vehicleSettings.wheel2 = value
+    entities.set_upgrade_value(var.createdTuneVehicle, 24, value)
+end)
+
+
+local wheelColorList = allOptions.wheelsList:list_select("Wheel Color", {}, "", LSCTable.paint.paintColors, 1, function(value)
+    vehicleSettings.wheelColor = LSCTable.paint.paintColorsIndexs[value]
+    SET_VEHICLE_EXTRA_COLOURS(var.createdTuneVehicle, 0, LSCTable.paint.paintColorsIndexs[value])
+end)
+
+local TireColorList = colorList(allOptions.wheelsList, "Tire Smoke Color", "tireSmokeC", function(color)
+    vehicleSettings.tireSmokeColor = color
+    TOGGLE_VEHICLE_MOD(var.createdTuneVehicle, 20, true)
+    SET_VEHICLE_TYRE_SMOKE_COLOR(var.createdTuneVehicle, color.r, color.g, color.b)
+end)
+
+--WINDOWS--
+allOptions.windowTintList = root:list_select("Window Tint", {}, "", LSCTable.windows.windowTintNames, 1, function(value)
+    vehicleSettings.windowTint = value - 1
+    SET_VEHICLE_WINDOW_TINT(var.createdTuneVehicle, value - 1)
+end)
+setupFocusHandlers(allOptions.windowTintList, "default2")
+
+
+--WHEN EVERYTHING IS LOADED -> REMOVE ALL OPTIONS--
+for allOptions as opt do
+    opt.visible = false
+end
+for modOptions as tbl do
+    tbl.option.visible = false
+    if tbl.list != nil then
+        tbl.list.visible = false
+    end
+end
+
+----------------
+--TICK HANDLER--
+----------------
+util.create_tick_handler(function()
+    if var.isFocusedOnVehicle then
+        local camOffset = getOffsetFromGameplayCam(8)
+        SET_ENTITY_COORDS_NO_OFFSET(var.createdVehicle, camOffset.x, camOffset.y, camOffset.z, true, false, false)
+        SET_ENTITY_ROTATION(var.createdVehicle, 0, 0, var.previewVehicleRot, 0, true)
+        SET_ENTITY_COMPLETELY_DISABLE_COLLISION(var.createdVehicle, false, true)
+        FREEZE_ENTITY_POSITION(var.createdVehicle, true)
+        SET_ENTITY_ALPHA(var.createdVehicle, 200, true)
+        var.previewVehicleRot += 1
+    end
+
+    if vehicleSettings.vehicle != nil then
+        allOptions.spawnVehicle.visible = true
+    end
+
+    if IS_DISABLED_CONTROL_PRESSED(0, 79) then
+        local invertedCam = {x = -var.currentCamPosition.x, y = -var.currentCamPosition.y, z = var.currentCamPosition.z}
+        moveCamera(var.createdCam, var.currentCamPosition, invertedCam, var.createdTuneVehicle)
+    end
+
+    if var.carSelected then
+        modOptions.frontBumpersList.option:setListActionOptions(LSCTable.bumpers.frontBumperNames)
+        modOptions.rearBumpersList.option:setListActionOptions(LSCTable.bumpers.rearBumperNames)
+        modOptions.bodyworkList.option:setListActionOptions(LSCTable.bodywork.bodyworkNames)
+        modOptions.exhaustList.option:setListActionOptions(LSCTable.exhaust.exhaustNames)
+        modOptions.grilleList.option:setListActionOptions(LSCTable.grille.grilleNames)
+        modOptions.hoodList.option:setListActionOptions(LSCTable.hood.hoodNames)
+        standardHornList:setListActionOptions(LSCTable.horn.hornNames.standardHorns)
+        musicalHornList:setListActionOptions(LSCTable.horn.hornNames.musicalHorns)
+        loopHornList:setListActionOptions(LSCTable.horn.hornNames.loopHorns)
+        specialHornList:setListActionOptions(LSCTable.horn.hornNames.specialHorns)
+        modOptions.liveryList.option:setListActionOptions(LSCTable.livery.liveryNames)
+        modOptions.plateHolderList.option:setListActionOptions(LSCTable.plate.plateHolder.plateHolderNames)
+        modOptions.roofFinsList.option:setListActionOptions(LSCTable.roof.roofFinNames)
+        modOptions.roof1List.option:setListActionOptions(LSCTable.roof.roofNames)
+        modOptions.roof2List.option:setListActionOptions(LSCTable.roof.roof2Names)
+        modOptions.skirtsList.option:setListActionOptions(LSCTable.skirts.skirtNames)
+        modOptions.spoilerList.option:setListActionOptions(LSCTable.spoiler.spoilerNames)
+        modOptions.sunstripsList.option:setListActionOptions(LSCTable.sunstrips.sunstripsNames)
+
+        wheelTypeList.value = var.wheelType + 1
+        var.wheelSlider.max_value = LSCTable.wheels.sliderMaxValue[wheelTypeList.value]
+        var.wheelSlider2.max_value = LSCTable.wheels.sliderMaxValue[wheelTypeList.value]
+
+        --Make all lists shown/hidden that not all vehicles have-
+        for i, tbl in modOptions do
+            if tbl.hasNoMods then
+                tbl.option.visible = false
+                    if tbl.list != nil then
+                        tbl.list.visible = false
+                    end
+                util.toast("mods")
+            elseif not tbl.hasNoMods then
+                util.toast("no mods")
+                tbl.option.visible = true
+                if tbl.list != nil then
+                    tbl.list.visible = true
+                end
+            end
+        end
+
+        --Make all lists shown that all vehicles have--
+        for allOptions as opt do
+            opt.visible = true
+        end
+
+        var.carSelected = false
+    end
+end)
