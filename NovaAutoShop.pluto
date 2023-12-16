@@ -1,5 +1,3 @@
-----YO--
-
 util.require_natives("2944a", "g")
 local scriptsDir = filesystem.scripts_dir()
 local filePathsTable = {
@@ -28,6 +26,7 @@ util.keep_running()
 local updatorTable = {
     lastCheckTime = nil,
     dayInMilis = 864,
+    updated = false,
 }
 
 --AUTO UPDATOR--
@@ -63,15 +62,56 @@ local function checkForUpdate(filePath)
     return false
 end
 
+local function resultStatus(config, result, headers, statusCode, lastcheckTimePath)
+    if statusCode == 304 then -- No Update
+        writeTimeToFile(lastcheckTimePath)
+        return false
+    elseif statusCode == 302 then
+        util.toast("Error1")
+        return false
+    elseif not result or result == "" then
+        util.toast("Error 3")
+        return false
+    end
+    return true
+end
+
+local function updateFile(result)
+    util.toast("Updating Script...")
+    local file = io.open($"{scriptsDir}/NovaAutoShop.pluto", "w")
+    if file then
+        file:write(result)
+        file:close()
+        util.toast("Updated Script, will now restart the script.")
+        updatorTable.updated = true
+        return true
+    else
+        util.toast("Error updating, could not open file.")
+        return false
+    end
+end
+
+local function updateFiles(lastcheckTimePath)
+    async_http.init("raw.githubusercontent.com", "/NovaPlays134/NovaAutoShop/main/NovaAutoShop.pluto", function(result, headers, statusCode)
+        if resultStatus(auto_update_config, result, headers, statusCode, lastcheckTimePath) then
+            updateFile(result)
+            --is_download_complete = true
+        end
+    end, function()
+        --util.toast("Error updating "..auto_update_config.name..": Update failed to download.", TOAST_ALL)
+        --is_download_complete = true
+    end)
+    async_http.dispatch()
+end
+
 local function AutoUpdate()
     if hasInternetAccess() then
         util.toast("Cannot update because the script's internet access is disabled, to enable turn on internet access.")
         return false
     end
-    local lastcheckTimeFile = filePathsTable[3]
-    if checkForUpdate(lastcheckTimeFile) then
-        writeTimeToFile(lastcheckTimeFile)
-        util.toast(updatorTable.lastcheckTime)
+    local lastcheckTimePath = filePathsTable[3]
+    if checkForUpdate(lastcheckTimePath) then
+        updateFiles(lastcheckTimePath)
     end
 end
 AutoUpdate()
