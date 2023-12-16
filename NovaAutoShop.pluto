@@ -1,4 +1,4 @@
---version 1.0.13
+--version 1.0.14
 --This script is made by Nova
 
 --A script for Stand that allows u to customize, spawn, enjoy any vehicle in GTA V 
@@ -20,7 +20,7 @@ local filePathsTable = {
 local updaterTable = {
     lastCheckTime = nil,
     dayInMilis = 86400000,
-    scriptVersion = "1.0.13",
+    scriptVersion = "1.0.14",
     newVersion = nil,
 }
 
@@ -68,10 +68,8 @@ end
 
 local function checkForUpdate(filePath)
     updaterTable.lastcheckTime = GetLastCheckTime(filePath)
-    if not updaterTable.lastcheckTime then
-        writeTimeToFile(filePath)
-        updaterTable.lastcheckTime = GetLastCheckTime(filePath)
-    end
+    util.toast(updaterTable.lastcheckTime)
+    
     if updaterTable.lastcheckTime >= updaterTable.dayInMilis then
         return true
     end
@@ -118,7 +116,9 @@ local function updateFiles(lastcheckTimePath, forced)
     async_http.init("raw.githubusercontent.com", "/NovaPlays134/NovaAutoShop/main/NovaAutoShop.pluto", function(result, headers, statusCode)
         if resultStatus(result, statusCode, lastcheckTimePath, forced) then
             if updateFile(result) then
-                writeTimeToFile(lastcheckTimePath)
+                if not forced then
+                    writeTimeToFile(lastcheckTimePath)
+                end
                 util.restart_script()
             end
         end
