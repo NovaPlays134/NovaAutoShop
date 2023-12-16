@@ -1,4 +1,4 @@
---version 1.0.6
+--version 1.0.7
 --This script is made by Nova
 
 --A script for Stand that allows u to customize, spawn, enjoy any vehicle in GTA V 
@@ -20,7 +20,7 @@ local filePathsTable = {
 local updatorTable = {
     lastCheckTime = nil,
     dayInMilis = 86400000,
-    scriptVersion = "1.0.6",
+    scriptVersion = "1.0.7",
     newVersion = nil,
 }
 
@@ -75,7 +75,7 @@ local function checkForUpdate(filePath)
     return false
 end
 
-local function resultStatus(config, result, headers, statusCode, lastcheckTimePath)
+local function resultStatus(config, result, headers, statusCode, lastcheckTimePath, forced)
     updatorTable.newVersion = result:match("--version%s+(%d+%.%d+%.%d+)")
     if statusCode == 304 then -- No Update
         writeTimeToFile(lastcheckTimePath)
@@ -87,6 +87,9 @@ local function resultStatus(config, result, headers, statusCode, lastcheckTimePa
         util.toast("Error, try agian later or restart the script.")
         return false
     elseif updatorTable.scriptVersion == updatorTable.newVersion then
+        if forced then
+            util.toast("No update found.")
+        end
         return false
     end
     return true
@@ -106,18 +109,15 @@ local function updateFile(result)
     end
 end
 
-local function updateFiles(lastcheckTimePath)
+local function updateFiles(lastcheckTimePath, forced)
     async_http.init("raw.githubusercontent.com", "/NovaPlays134/NovaAutoShop/main/NovaAutoShop.pluto", function(result, headers, statusCode)
-        if resultStatus(auto_update_config, result, headers, statusCode, lastcheckTimePath) then
+        if resultStatus(auto_update_config, result, headers, statusCode, lastcheckTimePath, forced) then
             if updateFile(result) then
                 util.restart_script()
-                return true
             end
         end
-        return false
     end, function()
         util.toast("Error, try agian later or restart the script.")
-        return false
     end)
     async_http.dispatch()
 end
@@ -129,7 +129,7 @@ local function AutoUpdate()
             util.toast("Cannot search for a update because the script's internet access is disabled, to enable turn on internet access.")
             return false
         end
-        updateFiles(lastcheckTimePath)
+        updateFiles(lastcheckTimePath, false)
     end
 end
 AutoUpdate()
@@ -140,9 +140,7 @@ root:action("Search For Update", {}, "Forces to look if a update is available", 
         return
     end
     local lastcheckTimePath = filePathsTable[3]
-    if not updateFiles(lastcheckTimePath) then
-        util.toast("No update found.")
-    end
+    updateFiles(lastcheckTimePath, true)
 end)
 
 ----------
