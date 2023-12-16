@@ -4,17 +4,29 @@ util.require_natives("2944a", "g")
 local scriptsDir = filesystem.scripts_dir()
 local filePathsTable = {
     $"{scriptsDir}/lib/NovaAutoShop",
-    $"{scriptsDir}/lib/NovaAutoShop/TimeFolder",
-    $"{scriptsDir}/lib/NovaAutoShop/TimeFolder/lastcheckTime.txt",
+    $"{scriptsDir}/lib/NovaAutoShop/excludes",
+    $"{scriptsDir}/lib/NovaAutoShop/excludes/lastcheckTime.txt",
+    $"{scriptsDir}/lib/NovaAutoShop/excludes/scriptVersion.txt",
+}
+
+local updatorTable = {
+    lastCheckTime = nil,
+    dayInMilis = 864,
+    updated = false,
+    scriptVersion = "24.12.18",
 }
 
 
-for filePathsTable as filePath do
+for i, filePath in filePathsTable do
     if not filesystem.exists(filePath) then
         if string.lfind(filePath, ".txt") then
             local file = io.open(filePath, "w")
             if file then
-                file:write(tostring(util.current_time_millis()))
+                if i == 3 then
+                    file:write(tostring(util.current_time_millis()))
+                else
+                    file:write(updatorTable.scriptVersion)
+                end
                 file:close()
             end
         else
@@ -24,12 +36,6 @@ for filePathsTable as filePath do
 end
 
 util.keep_running()
-
-local updatorTable = {
-    lastCheckTime = nil,
-    dayInMilis = 864,
-    updated = false,
-}
 
 --AUTO UPDATOR--
 local function hasInternetAccess()
@@ -65,6 +71,7 @@ local function checkForUpdate(filePath)
 end
 
 local function resultStatus(config, result, headers, statusCode, lastcheckTimePath)
+    local newVersion = result:match("--version%s+(%d+%.%d+%.%d+)")
     if statusCode == 304 then -- No Update
         writeTimeToFile(lastcheckTimePath)
         return false
@@ -76,8 +83,10 @@ local function resultStatus(config, result, headers, statusCode, lastcheckTimePa
         return false
     elseif not string.startswith(result, "--version") then
         return false
+    elseif updatorTable.scriptVersion == newVersion then
+        util.toast("same version")
+        return false
     end
-    local version = result:match("--version%s+(%d+%.%d+%.%d+)")
     util.toast(version)
     return true
 end
