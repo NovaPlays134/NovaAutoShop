@@ -1,4 +1,4 @@
---version 1.0.10
+--version 1.0.11
 --This script is made by Nova
 
 --A script for Stand that allows u to customize, spawn, enjoy any vehicle in GTA V 
@@ -16,11 +16,11 @@ local filePathsTable = {
     $"{scriptsDir}/lib/NovaAutoShop/excludes/scriptVersion.txt",
 }
 
---AUTO UPDATOR--
-local updatorTable = {
+--AUTO UPDATER--
+local updaterTable = {
     lastCheckTime = nil,
     dayInMilis = 86400000,
-    scriptVersion = "1.0.10",
+    scriptVersion = "1.0.11",
     newVersion = nil,
 }
 
@@ -33,7 +33,7 @@ for i, filePath in filePathsTable do
                 if i == 3 then
                     file:write(tostring(util.current_time_millis()))
                 else
-                    file:write(updatorTable.scriptVersion)
+                    file:write(updaterTable.scriptVersion)
                 end
                 file:close()
             end
@@ -68,15 +68,15 @@ end
 
 local function checkForUpdate(filePath)
     local file = io.open(filePath, "r")
-    updatorTable.lastcheckTime = GetLastCheckTime(filePath)
-    if updatorTable.lastcheckTime >= updatorTable.dayInMilis then
+    updaterTable.lastcheckTime = GetLastCheckTime(filePath)
+    if updaterTable.lastcheckTime >= updaterTable.dayInMilis then
         return true
     end
     return false
 end
 
-local function resultStatus(config, result, headers, statusCode, lastcheckTimePath, forced)
-    updatorTable.newVersion = result:match("--version%s+(%d+%.%d+%.%d+)")
+local function resultStatus(result, statusCode, lastcheckTimePath, forced)
+    updaterTable.newVersion = result:match("--version%s+(%d+%.%d+%.%d+)")
     if statusCode == 304 then -- No Update
         writeTimeToFile(lastcheckTimePath)
         return false
@@ -86,9 +86,11 @@ local function resultStatus(config, result, headers, statusCode, lastcheckTimePa
     elseif not result or result == "" then
         util.toast("Error, try agian later or restart the script.")
         return false
-    elseif updatorTable.scriptVersion == updatorTable.newVersion then
+    elseif updaterTable.scriptVersion == updaterTable.newVersion then
         if forced then
             util.toast("No update found.")
+        else
+            writeTimeToFile(lastcheckTimePath)
         end
         return false
     end
@@ -101,18 +103,19 @@ local function updateFile(result)
     if file then
         file:write(result)
         file:close()
-        util.toast($"Updated Script to version {updatorTable.newVersion}, will now restart the script.")
+        util.toast($"Updated Script to version {updaterTable.newVersion}, will now restart the script.")
         return true
     else
-        util.toast($"Error updating to version {updatorTable.newVersion}, could not open file.")
+        util.toast($"Error updating to version {updaterTable.newVersion}, could not open file.")
         return false
     end
 end
 
 local function updateFiles(lastcheckTimePath, forced)
     async_http.init("raw.githubusercontent.com", "/NovaPlays134/NovaAutoShop/main/NovaAutoShop.pluto", function(result, headers, statusCode)
-        if resultStatus(auto_update_config, result, headers, statusCode, lastcheckTimePath, forced) then
+        if resultStatus(result, statusCode, lastcheckTimePath, forced) then
             if updateFile(result) then
+                writeTimeToFile(lastcheckTimePath)
                 util.restart_script()
             end
         end
