@@ -1,4 +1,4 @@
---version 1.0.3
+--version 1.0.4
 --This script is made by Nova
 
 --A script for Stand that allows u to customize, spawn, enjoy any vehicle in GTA V 
@@ -16,7 +16,7 @@ local filePathsTable = {
 local updatorTable = {
     lastCheckTime = nil,
     dayInMilis = 86400000,
-    scriptVersion = "1.0.3",
+    scriptVersion = "1.0.4",
     newVersion = nil,
 }
 
@@ -1037,8 +1037,8 @@ end
 -----------
 local root = menu.my_root()
 
-local safeVehicle = root:action("Safe Vehicle", {"safeVehicleName"}, "", function()
-    menu.show_command_box("safeVehicleName ")
+local saveVehicle = root:action("save Vehicle", {"saveVehicleName"}, "", function()
+    menu.show_command_box("saveVehicleName ")
 end, function(text)
     local filePath = $"{var.scriptsDir}/lib/NovaAutoShop/{text}.txt"
     local file = io.open(filePath, "w")
@@ -1505,9 +1505,7 @@ util.create_tick_handler(function()
                     if tbl.list != nil then
                         tbl.list.visible = false
                     end
-                util.toast("mods")
             elseif not tbl.hasNoMods then
-                util.toast("no mods")
                 tbl.option.visible = true
                 if tbl.list != nil then
                     tbl.list.visible = true
