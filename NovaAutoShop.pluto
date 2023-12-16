@@ -1,4 +1,4 @@
---version 1.0.14
+--version 1.0.15
 --This script is made by Nova
 
 --A script for Stand that allows u to customize, spawn, enjoy any vehicle in GTA V 
@@ -20,7 +20,7 @@ local filePathsTable = {
 local updaterTable = {
     lastCheckTime = nil,
     dayInMilis = 86400000,
-    scriptVersion = "1.0.14",
+    scriptVersion = "1.0.15",
     newVersion = nil,
 }
 
@@ -68,7 +68,6 @@ end
 
 local function checkForUpdate(filePath)
     updaterTable.lastcheckTime = GetLastCheckTime(filePath)
-    util.toast(updaterTable.lastcheckTime)
     
     if updaterTable.lastcheckTime >= updaterTable.dayInMilis then
         return true
