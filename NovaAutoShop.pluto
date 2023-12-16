@@ -1,4 +1,4 @@
---version 1.0.4
+--version 1.0.5
 --This script is made by Nova
 
 --A script for Stand that allows u to customize, spawn, enjoy any vehicle in GTA V 
@@ -16,9 +16,11 @@ local filePathsTable = {
 local updatorTable = {
     lastCheckTime = nil,
     dayInMilis = 86400000,
-    scriptVersion = "1.0.4",
+    scriptVersion = "1.0.5",
     newVersion = nil,
 }
+
+local root = menu.my_root()
 
 for i, filePath in filePathsTable do
     if not filesystem.exists(filePath) then
@@ -109,25 +111,39 @@ local function updateFiles(lastcheckTimePath)
         if resultStatus(auto_update_config, result, headers, statusCode, lastcheckTimePath) then
             if updateFile(result) then
                 util.restart_script()
+                return true
             end
         end
+        return false
     end, function()
         util.toast("Error, try agian later or restart the script.")
+        return false
     end)
     async_http.dispatch()
 end
 
 local function AutoUpdate()
-    if hasInternetAccess() then
-        util.toast("Cannot update because the script's internet access is disabled, to enable turn on internet access.")
-        return false
-    end
     local lastcheckTimePath = filePathsTable[3]
     if checkForUpdate(lastcheckTimePath) then
+        if hasInternetAccess() then
+            util.toast("Cannot search for a update because the script's internet access is disabled, to enable turn on internet access.")
+            return false
+        end
         updateFiles(lastcheckTimePath)
     end
 end
 AutoUpdate()
+
+root:action("Search For Update", {}, "Forces to look if a update is available", function()
+    if hasInternetAccess() then
+        util.toast("Cannot update because the script's internet access is disabled, to enable turn on internet access.")
+        return
+    end
+    local lastcheckTimePath = filePathsTable[3]
+    if not updateFiles(lastcheckTimePath) then
+        util.toast("No update found.")
+    end
+end)
 
 ----------
 --TABLES--
@@ -1035,7 +1051,6 @@ end
 -----------
 --OPTIONS--
 -----------
-local root = menu.my_root()
 
 local saveVehicle = root:action("save Vehicle", {"saveVehicleName"}, "", function()
     menu.show_command_box("saveVehicleName ")
