@@ -1,4 +1,4 @@
---version 1.0.11
+--version 1.0.12
 --This script is made by Nova
 
 --A script for Stand that allows u to customize, spawn, enjoy any vehicle in GTA V 
@@ -20,7 +20,7 @@ local filePathsTable = {
 local updaterTable = {
     lastCheckTime = nil,
     dayInMilis = 86400000,
-    scriptVersion = "1.0.11",
+    scriptVersion = "1.0.12",
     newVersion = nil,
 }
 
@@ -67,8 +67,10 @@ local function GetLastCheckTime(filePath)
 end
 
 local function checkForUpdate(filePath)
-    local file = io.open(filePath, "r")
     updaterTable.lastcheckTime = GetLastCheckTime(filePath)
+    if not updaterTable.lastcheckTime then
+        writeTimeToFile(filePath)
+    end
     if updaterTable.lastcheckTime >= updaterTable.dayInMilis then
         return true
     end
@@ -892,16 +894,15 @@ function getVehicleModInfo(vehicle)
 end
 
 --PREVIEW VEHICLE--
-function PreviewVehicle(vehicle, create)
+function PreviewVehicle(vehicle, create, loadSettings)
     if create then
         for i, vehicle in var.createdVehicles do
             entities.delete_by_handle(vehicle)
         end
         var.createdVehicles = {}
-    
-        local vehicleHash = util.joaat(vehicle)
-        util.request_model(vehicleHash)
-        var.createdVehicle = entities.create_vehicle(vehicleHash, {x = 0, y = 0, z = 0}, 0)
+
+        util.request_model(vehicle)
+        var.createdVehicle = entities.create_vehicle(vehicle, {x = 0, y = 0, z = 0}, 0)
         table.insert(var.createdVehicles, var.createdVehicle)
         FREEZE_ENTITY_POSITION(var.createdVehicle, true)
         vehicleSpawnValues(var.createdVehicle)
@@ -952,12 +953,12 @@ function makeAllVehicleList(root, callback)
 
         vehicleAction:onFocus(function()
             var.isFocusedOnVehicle = true
-            PreviewVehicle(vehicle.name, true)
+            PreviewVehicle(util.joaat(vehicle.name), true, true)
         end)
     
         vehicleAction:onBlur(function()
             var.isFocusedOnVehicle = false
-            PreviewVehicle(vehicle.name, false)
+            PreviewVehicle(util.joaat(vehicle.name), false, true)
         end)
     end
 end
@@ -1118,6 +1119,18 @@ function readSettingsFromFile(filePath)
     end
 end
 
+local function getVehicleHashFromFile(filePath)
+    local file = io.open(filePath, "r")
+    if file then
+        local content = file:read("*all")
+        file:close()
+    
+        local vehicleHash = string.match(content, "vehicle%s?=%s?(-?%d+)")
+        return tonumber(vehicleHash)
+    end
+    return nil
+end
+
 local vehiclesFolderPath = $"{var.scriptsDir}/lib/NovaAutoShop"
 local savedVehicles = {}
 for filesystem.list_files(vehiclesFolderPath) as filePath do
@@ -1135,10 +1148,31 @@ end)
 loadVehicleList:divider("")
 
 for i, file in savedVehicles do
-    loadVehicleList:action(file.name, {}, "", function()
+    local action = loadVehicleList:action(file.name, {}, "", function()
         readSettingsFromFile(file.filePath)
-        util.toast("Successfully loaded vehicle")
+        var.carSelected = true
+        local offset = GET_OFFSET_FROM_ENTITY_IN_WORLD_COORDS(players.user_ped(), 0, 5, 0)
+        local vehicle = entities.create_vehicle(vehicleSettings.vehicle, offset, 0)
+        TOGGLE_VEHICLE_MOD(vehicle, 22, true)
+        SET_VEHICLE_MOD_KIT(vehicle, 0)
+        vehicleSpawnValues(vehicle)
+        local userRotation = GET_ENTITY_ROTATION(players.user_ped(), 0)
+        SET_ENTITY_ROTATION(vehicle, 0, 0, userRotation.z, 0, true)
+        SET_PED_INTO_VEHICLE(players.user_ped(), vehicle, -1)
+        util.toast("Successfully spawned vehicle and loaded vehicle settings")
+        loadVehicleList:focus()
     end)
+
+    action:onFocus(function()
+        getVehicleHashFromFile(file.filePath)
+        var.isFocusedOnVehicle = true
+        PreviewVehicle(getVehicleHashFromFile(file.filePath), true, false)
+    end)
+    action:onBlur(function()
+        var.isFocusedOnVehicle = false
+        PreviewVehicle(getVehicleHashFromFile(file.filePath), false, false)
+    end)
+
 end
 
 makeAllVehicleList(root, function(vehicle)
