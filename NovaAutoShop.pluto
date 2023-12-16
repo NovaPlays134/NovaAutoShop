@@ -1,4 +1,4 @@
---version 1.12.18
+--version 24.12.18
 
 util.require_natives("2944a", "g")
 local scriptsDir = filesystem.scripts_dir()
