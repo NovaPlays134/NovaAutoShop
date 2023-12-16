@@ -1,4 +1,4 @@
---version 1.0.7
+--version 1.0.8
 --This script is made by Nova
 
 --A script for Stand that allows u to customize, spawn, enjoy any vehicle in GTA V 
@@ -20,7 +20,7 @@ local filePathsTable = {
 local updatorTable = {
     lastCheckTime = nil,
     dayInMilis = 86400000,
-    scriptVersion = "1.0.7",
+    scriptVersion = "1.0.8",
     newVersion = nil,
 }
 
@@ -1046,6 +1046,18 @@ local function setupFocusHandlers(opt, camPosName)
     end)
 end
 
+function hideAllOptions()
+    for allOptions as opt do
+        opt.visible = false
+    end
+    for modOptions as tbl do
+        tbl.option.visible = false
+        if tbl.list != nil then
+            tbl.list.visible = false
+        end
+    end
+end
+
 -----------
 --OPTIONS--
 -----------
@@ -1135,8 +1147,10 @@ allOptions.tuningMode = root:toggle("Tuning Mode", {}, "", function(on)
     if on then
         var.userPosition = players.get_position(players.user())
         var.userRotation = GET_ENTITY_ROTATION(players.user_ped(), 0)
+
         var.createdTuneVehicle = entities.create_vehicle(vehicleSettings.vehicle, {x = -211.76971, y = -1323.8885, z = 30.05576}, 0)
-        local vehiclePosition = GET_ENTITY_COORDS(var.createdTuneVehicle, false)
+        vehicleSpawnValues(var.createdTuneVehicle)
+        SET_PED_INTO_VEHICLE(players.user_ped(), var.createdTuneVehicle, -1)
         FREEZE_ENTITY_POSITION(var.createdTuneVehicle, true)
         SET_VEHICLE_ENGINE_ON(var.createdTuneVehicle, true, true, false)
         TOGGLE_VEHICLE_MOD(var.createdTuneVehicle, 22, true)
@@ -1144,17 +1158,16 @@ allOptions.tuningMode = root:toggle("Tuning Mode", {}, "", function(on)
         SET_VEHICLE_TAIL_LIGHTS(var.createdTuneVehicle, true)
         SET_VEHICLE_MOD_KIT(var.createdTuneVehicle, 0)
         SET_VEHICLE_DOORS_LOCKED(var.createdTuneVehicle, 4)
-        vehicleSpawnValues(var.createdTuneVehicle)
         var.createdCam = createCam(var.createdTuneVehicle)
-        SET_PED_INTO_VEHICLE(players.user_ped(), var.createdTuneVehicle, -1)
         SET_ENTITY_ALPHA(players.user_ped(), 0, true)
-
         DISABLE_CONTROL_ACTION(0, 79, true)
     else
         deleteCam(var.createdCam)
         entities.delete(var.createdTuneVehicle)
+        var.createdTuneVehicle = nil
         SET_ENTITY_COORDS(players.user_ped(), var.userPosition.x, var.userPosition.y, var.userPosition.z, false, false, false, false) 
         SET_ENTITY_ROTATION(players.user_ped(), var.userRotation.x, var.userRotation.y, var.userRotation.z, 0, true)
+        ENABLE_CONTROL_ACTION(0, 79, true)
     end
 end)
 
@@ -1174,14 +1187,18 @@ allOptions.divider = root:divider("")
 --ARMOR--
 allOptions.armorList = root:list_select("Armor", {}, "", LSCTable.armor.armorNames, 1, function(value)
     vehicleSettings.armor = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 16, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 16, value - 2)
+    end
 end)
 setupFocusHandlers(allOptions.armorList, "default2")
 
 --BRAKES--
 allOptions.brakesList = root:list_select("Brakes", {}, "", LSCTable.brakes.brakeNames, 1, function(value)
     vehicleSettings.brakes = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 12, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 12, value - 2)
+    end
 end)
 setupFocusHandlers(allOptions.brakesList, "default2")
 
@@ -1191,47 +1208,61 @@ setupFocusHandlers(modOptions.frontBumpersList.list, "frontLowAngle")
 
 modOptions.frontBumpersList.option = modOptions.frontBumpersList.list:list_select("Front Bumpers", {}, "", LSCTable.bumpers.frontBumperNames, 1, function(value)
     vehicleSettings.frontBumper = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 1, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 1, value - 2)
+    end
 end)
 setupFocusHandlers(modOptions.frontBumpersList.option, "frontLowAngle")
 modOptions.rearBumpersList.option = modOptions.frontBumpersList.list:list_select("Rear Bumpers", {}, "", LSCTable.bumpers.rearBumperNames, 1, function(value)
     vehicleSettings.rearBumper = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 2, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 2, value - 2)
+    end
 end)
 setupFocusHandlers(modOptions.rearBumpersList.option, "backHighAngle")
 
 --BODYWORK--
 modOptions.bodyworkList.option = root:list_select("Bodywork", {}, "", LSCTable.bodywork.bodyworkNames, 1, function(value)
     vehicleSettings.bodywork = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 8, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 8, value - 2)
+    end
 end)
 setupFocusHandlers(modOptions.bodyworkList.option, "default2")
 
 --ARMOR--
 allOptions.engineList = root:list_select("Engine", {}, "", LSCTable.engine.engineNames, 1, function(value)
     vehicleSettings.engine = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 11, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 11, value - 2)
+    end
 end)
 setupFocusHandlers(allOptions.engineList, "default2")
 
 --EXHAUST--
 modOptions.exhaustList.option = root:list_select("Exhaust", {}, "", LSCTable.exhaust.exhaustNames, 1, function(value)
     vehicleSettings.exhaust = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 4, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 4, value - 2)
+    end
 end)
 setupFocusHandlers(modOptions.exhaustList.option, "backLow")
 
 --GRILLE--
 modOptions.grilleList.option = root:list_select("Grille", {}, "", LSCTable.grille.grilleNames, 1, function(value)
     vehicleSettings.grille = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 6, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 6, value - 2)
+    end
 end)
 setupFocusHandlers(modOptions.grilleList.option, "frontHigh")
 
 --HOOD--
 modOptions.hoodList.option = root:list_select("Hood", {}, "", LSCTable.hood.hoodNames, 1, function(value)
     vehicleSettings.hood = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 7, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 7, value - 2)
+    end
 end)
 setupFocusHandlers(modOptions.hoodList.option, "frontHigh")
 
@@ -1241,22 +1272,30 @@ setupFocusHandlers(allOptions.hornList, "default2")
 
 local standardHornList = allOptions.hornList:list_select("Standard", {}, "", LSCTable.horn.hornNames.standardHorns, 1, function(value)
     vehicleSettings.horn = LSCTable.horn.horns.standardHorns[value].index
-    entities.set_upgrade_value(var.createdTuneVehicle, 14, LSCTable.horn.horns.standardHorns[value].index)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 14, LSCTable.horn.horns.standardHorns[value].index)
+    end
 end)
 
 local musicalHornList = allOptions.hornList:list_select("Musical", {}, "", LSCTable.horn.hornNames.musicalHorns, 1, function(value)
     vehicleSettings.horn = LSCTable.horn.horns.musicalHorns[value].index
-    entities.set_upgrade_value(var.createdTuneVehicle, 14, LSCTable.horn.horns.musicalHorns[value].index)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 14, LSCTable.horn.horns.musicalHorns[value].index)
+    end
 end)
 
 local loopHornList = allOptions.hornList:list_select("Loop", {}, "", LSCTable.horn.hornNames.loopHorns, 1, function(value)
     vehicleSettings.horn = LSCTable.horn.horns.loopHorns[value].index
-    entities.set_upgrade_value(var.createdTuneVehicle, 14, LSCTable.horn.horns.loopHorns[value].index)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 14, LSCTable.horn.horns.loopHorns[value].index)
+    end
 end)
 
 local specialHornList = allOptions.hornList:list_select("Special", {}, "", LSCTable.horn.hornNames.specialHorns, 1, function(value)
     vehicleSettings.horn = LSCTable.horn.horns.specialHorns[value].index
-    entities.set_upgrade_value(var.createdTuneVehicle, 14, LSCTable.horn.horns.specialHorns[value].index)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 14, LSCTable.horn.horns.specialHorns[value].index)
+    end
 end)
 
 --LIGHTS--
@@ -1265,7 +1304,9 @@ setupFocusHandlers(allOptions.lightsList, "default2")
 
 local headlightsList = allOptions.lightsList:list_select("Headlights", {}, "", LSCTable.headlights.headlightNames, 1, function(value)
     vehicleSettings.headlights = value - 1
-    SET_VEHICLE_XENON_LIGHT_COLOR_INDEX(var.createdTuneVehicle, value - 1) 
+    if var.createdTuneVehicle then
+        SET_VEHICLE_XENON_LIGHT_COLOR_INDEX(var.createdTuneVehicle, value - 1)
+    end
 end)
 setupFocusHandlers(headlightsList, "frontHigh")
 
@@ -1274,23 +1315,27 @@ setupFocusHandlers(neonKitsList, "frontHighAngle")
 
 local neonLayoutList = neonKitsList:list_select("Neon Layout", {}, "", LSCTable.neonKits.neonLayoutNames, 1, function(value)
     vehicleSettings.neonLayout = LSCTable.neonKits.neonLayoutIndexs[value]
-    for i = 0, 3 do
-        SET_VEHICLE_NEON_ENABLED(var.createdTuneVehicle, i, false)
-    end
-
-    if value != 1 then
-        for i, index in LSCTable.neonKits.neonLayoutIndexs[value] do
-            SET_VEHICLE_NEON_ENABLED(var.createdTuneVehicle, index, true)
+    if var.createdTuneVehicle then
+        for i = 0, 3 do
+            SET_VEHICLE_NEON_ENABLED(var.createdTuneVehicle, i, false)
         end
-    end
 
-    SET_VEHICLE_NEON_COLOUR(var.createdTuneVehicle, vehicleSettings.neonColor.r, vehicleSettings.neonColor.g, vehicleSettings.neonColor.b)
+        if value != 1 then
+            for i, index in LSCTable.neonKits.neonLayoutIndexs[value] do
+                SET_VEHICLE_NEON_ENABLED(var.createdTuneVehicle, index, true)
+            end
+        end
+
+        SET_VEHICLE_NEON_COLOUR(var.createdTuneVehicle, vehicleSettings.neonColor.r, vehicleSettings.neonColor.g, vehicleSettings.neonColor.b)
+    end
 end)
 setupFocusHandlers(neonLayoutList, "frontHighAngle")
 
 local neonColorList = colorList(neonKitsList, "Neon Color", "neonColor", function(color)
     vehicleSettings.neonColor = color
-    SET_VEHICLE_NEON_COLOUR(var.createdTuneVehicle, color.r, color.g, color.b)
+    if var.createdTuneVehicle then
+        SET_VEHICLE_NEON_COLOUR(var.createdTuneVehicle, color.r, color.g, color.b)
+    end
 end)
 setupFocusHandlers(neonColorList, "frontHighAngle")
 
@@ -1298,7 +1343,9 @@ setupFocusHandlers(neonColorList, "frontHighAngle")
 --LIVERY--
 modOptions.liveryList.option = root:list_select("Livery", {}, "", LSCTable.livery.liveryNames, 1, function(value)
     vehicleSettings.livery = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 48, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 48, value - 2)
+    end
 end)
 setupFocusHandlers(modOptions.liveryList.option, "default2")
 
@@ -1308,19 +1355,25 @@ setupFocusHandlers(allOptions.plateList, "backLow")
 
 local plateColorList = allOptions.plateList:list_select("Plate Color", {}, "", LSCTable.plate.plateColors, 1, function(value)
     vehicleSettings.plateColor = value - 1
-    SET_VEHICLE_NUMBER_PLATE_TEXT_INDEX(var.createdTuneVehicle, value - 1)
+    if var.createdTuneVehicle then
+        SET_VEHICLE_NUMBER_PLATE_TEXT_INDEX(var.createdTuneVehicle, value - 1)
+    end
 end)
 
 modOptions.plateHolderList.option = allOptions.plateList:list_select("Plate Holder", {}, "", LSCTable.plate.plateHolder.plateHolderNames, 1, function(value)
     vehicleSettings.plateHolder = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 25, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 25, value - 2)
+    end
 end)
 
 local plateTextOpt = allOptions.plateList:action("Plate Text", {"SPlateText"}, "Sets the vehicle's plate text (only 8 characters will show)", function()
     menu.show_command_box("SPlateText ")
 end, function(text)
     vehicleSettings.plateText = text
-    SET_VEHICLE_NUMBER_PLATE_TEXT(var.createdTuneVehicle, text)
+    if var.createdTuneVehicle then
+        SET_VEHICLE_NUMBER_PLATE_TEXT(var.createdTuneVehicle, text)
+    end
 end)
 
 --RESPRAY--
@@ -1329,22 +1382,30 @@ setupFocusHandlers(allOptions.resprayList, "default2")
 
 local primaryColorList = allOptions.resprayList:list_select("Primary Color", {}, "", LSCTable.paint.paintColors, 1, function(value)
     vehicleSettings.primary = LSCTable.paint.paintColorsIndexs[value]
-    SET_VEHICLE_COLOURS(var.createdTuneVehicle, LSCTable.paint.paintColorsIndexs[value], vehicleSettings.secondary)
+    if var.createdTuneVehicle then
+        SET_VEHICLE_COLOURS(var.createdTuneVehicle, LSCTable.paint.paintColorsIndexs[value], vehicleSettings.secondary)
+    end
 end)
 
 local secondaryColorList = allOptions.resprayList:list_select("Secondary Color", {}, "", LSCTable.paint.paintColors, 1, function(value)
     vehicleSettings.secondary = LSCTable.paint.paintColorsIndexs[value]
-    SET_VEHICLE_COLOURS(var.createdTuneVehicle, vehicleSettings.primary, LSCTable.paint.paintColorsIndexs[value])
+    if var.createdTuneVehicle then
+        SET_VEHICLE_COLOURS(var.createdTuneVehicle, vehicleSettings.primary, LSCTable.paint.paintColorsIndexs[value])
+    end
 end)
 
 local primaryPaintTypeList = allOptions.resprayList:list_select("Primary Paint Type", {}, "", LSCTable.paint.paintTypes, 1, function(value)
     vehicleSettings.primaryPaintType = value - 1
-    SET_VEHICLE_MOD_COLOR_1(var.createdTuneVehicle, value - 1, vehicleSettings.primary, 0)
+    if var.createdTuneVehicle then
+        SET_VEHICLE_MOD_COLOR_1(var.createdTuneVehicle, value - 1, vehicleSettings.primary, 0)
+    end
 end)
 
 local secondaryPaintTypeList = allOptions.resprayList:list_select("Secondary Paint Type", {}, "", LSCTable.paint.paintTypes, 1, function(value)
     vehicleSettings.secondaryPaintType = value - 1
-    SET_VEHICLE_MOD_COLOR_2(var.createdTuneVehicle, value - 1, vehicleSettings.secondary)
+    if var.createdTuneVehicle then
+        SET_VEHICLE_MOD_COLOR_2(var.createdTuneVehicle, value - 1, vehicleSettings.secondary)
+    end
 end)
 
 --ROOF--
@@ -1353,58 +1414,76 @@ setupFocusHandlers(modOptions.roofFinsList.list, "backTop")
 
 modOptions.roofFinsList.option = modOptions.roofFinsList.list:list_select("Roof Fins", {}, "", LSCTable.roof.roofFinNames, 1, function(value)
     vehicleSettings.roofFins = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 5, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 5, value - 2)
+    end
 end)
 
 modOptions.roof1List.option = modOptions.roofFinsList.list:list_select("Roof", {}, "", LSCTable.roof.roofNames, 1, function(value)
     vehicleSettings.roof = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 10, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 10, value - 2)
+    end
 end)
 
 modOptions.roof2List.option = modOptions.roofFinsList.list:list_select("Roof 2", {}, "", LSCTable.roof.roof2Names, 1, function(value)
     vehicleSettings.roof2 = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 9, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 9, value - 2)
+    end
 end)
 
 --SKIRTS--
 modOptions.skirtsList.option = root:list_select("Skirts", {}, "", LSCTable.skirts.skirtNames, 1, function(value)
     vehicleSettings.skirts = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 3, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 3, value - 2)
+    end
 end)
 setupFocusHandlers(modOptions.skirtsList.option, "leftLow")
 
 --SPOILER--
 modOptions.spoilerList.option = root:list_select("Spoiler", {}, "", LSCTable.spoiler.spoilerNames, 1, function(value)
     vehicleSettings.spoiler = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 0, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 0, value - 2)
+    end
 end)
 setupFocusHandlers(modOptions.spoilerList.option, "backHighAngle")
 
 --SUNSTRIPS--
 modOptions.sunstripsList.option = root:list_select("Sunstrips", {}, "", LSCTable.sunstrips.sunstripsNames, 1, function(value)
     vehicleSettings.sunstrips = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 27, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 27, value - 2)
+    end
 end)
 setupFocusHandlers(modOptions.sunstripsList.option, "frontHighAngle")
 
 --SUSPENSION--
 allOptions.suspensionList = root:list_select("Suspension", {}, "", LSCTable.suspension.suspensionNames, 1, function(value)
     vehicleSettings.suspension = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 15, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 15, value - 2)
+    end
 end)
 setupFocusHandlers(allOptions.suspensionList, "leftLow")
 
 --TRANSMISSION--
 allOptions.transmissionList = root:list_select("Transmission", {}, "", LSCTable.transmission.transmissionNames, 1, function(value)
     vehicleSettings.transmission = value - 2
-    entities.set_upgrade_value(var.createdTuneVehicle, 13, value - 2)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 13, value - 2)
+    end
 end)
 setupFocusHandlers(allOptions.transmissionList, "leftLow")
 
 --TURBO--
 allOptions.turboList = root:list_select("Turbo", {}, "", LSCTable.turbo.turboNames, 1, function(value)
     vehicleSettings.turbo = value != 1
-    TOGGLE_VEHICLE_MOD(var.createdTuneVehicle, 18, vehicleSettings.turbo)
+    if var.createdTuneVehicle then
+        TOGGLE_VEHICLE_MOD(var.createdTuneVehicle, 18, vehicleSettings.turbo)
+    end
 end)
 setupFocusHandlers(allOptions.turboList, "leftLow")
 
@@ -1414,55 +1493,57 @@ setupFocusHandlers(allOptions.wheelsList, "leftLow")
 
 local wheelTypeList = allOptions.wheelsList:list_select("Wheel Type", {}, "", LSCTable.wheels.wheelTypeNames, 1, function(value)
     vehicleSettings.wheelType = value - 1
-    SET_VEHICLE_WHEEL_TYPE(var.createdTuneVehicle, value - 1)
-
+    if var.createdTuneVehicle then
+        SET_VEHICLE_WHEEL_TYPE(var.createdTuneVehicle, value - 1)
+        entities.set_upgrade_value(var.createdTuneVehicle, 23, var.wheelSlider.value)
+        entities.set_upgrade_value(var.createdTuneVehicle, 24, var.wheelSlider2.value)
+    end
     var.wheelSlider.max_value = LSCTable.wheels.sliderMaxValue[value]
-    entities.set_upgrade_value(var.createdTuneVehicle, 23, var.wheelSlider.value)
-
     var.wheelSlider2.max_value = LSCTable.wheels.sliderMaxValue[value]
-    entities.set_upgrade_value(var.createdTuneVehicle, 24, var.wheelSlider2.value)
 end)
 
 var.wheelSlider = allOptions.wheelsList:slider("Wheel", {}, "Changes based of the wheel type you have selected.", -1, -1, -1, 1, function(value)
     vehicleSettings.wheel = value
-    entities.set_upgrade_value(var.createdTuneVehicle, 23, value)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 23, value)
+    end
 end)
 
 var.wheelSlider2 = allOptions.wheelsList:slider("Wheel (only for motocycles)", {}, "Changes based of the wheel type you have selected.", -1, -1, -1, 1, function(value)
     vehicleSettings.wheel2 = value
-    entities.set_upgrade_value(var.createdTuneVehicle, 24, value)
+    if var.createdTuneVehicle then
+        entities.set_upgrade_value(var.createdTuneVehicle, 24, value)
+    end
 end)
 
 
 local wheelColorList = allOptions.wheelsList:list_select("Wheel Color", {}, "", LSCTable.paint.paintColors, 1, function(value)
     vehicleSettings.wheelColor = LSCTable.paint.paintColorsIndexs[value]
-    SET_VEHICLE_EXTRA_COLOURS(var.createdTuneVehicle, 0, LSCTable.paint.paintColorsIndexs[value])
+    if var.createdTuneVehicle then
+        SET_VEHICLE_EXTRA_COLOURS(var.createdTuneVehicle, 0, LSCTable.paint.paintColorsIndexs[value])
+    end
 end)
 
 local TireColorList = colorList(allOptions.wheelsList, "Tire Smoke Color", "tireSmokeC", function(color)
     vehicleSettings.tireSmokeColor = color
-    TOGGLE_VEHICLE_MOD(var.createdTuneVehicle, 20, true)
-    SET_VEHICLE_TYRE_SMOKE_COLOR(var.createdTuneVehicle, color.r, color.g, color.b)
+    if var.createdTuneVehicle then
+        TOGGLE_VEHICLE_MOD(var.createdTuneVehicle, 20, true)
+        SET_VEHICLE_TYRE_SMOKE_COLOR(var.createdTuneVehicle, color.r, color.g, color.b)
+    end
 end)
 
 --WINDOWS--
 allOptions.windowTintList = root:list_select("Window Tint", {}, "", LSCTable.windows.windowTintNames, 1, function(value)
     vehicleSettings.windowTint = value - 1
-    SET_VEHICLE_WINDOW_TINT(var.createdTuneVehicle, value - 1)
+    if var.createdTuneVehicle then
+        SET_VEHICLE_WINDOW_TINT(var.createdTuneVehicle, value - 1)
+    end
 end)
 setupFocusHandlers(allOptions.windowTintList, "default2")
 
 
 --WHEN EVERYTHING IS LOADED -> REMOVE ALL OPTIONS--
-for allOptions as opt do
-    opt.visible = false
-end
-for modOptions as tbl do
-    tbl.option.visible = false
-    if tbl.list != nil then
-        tbl.list.visible = false
-    end
-end
+hideAllOptions()
 
 ----------------
 --TICK HANDLER--
@@ -1478,7 +1559,7 @@ util.create_tick_handler(function()
         var.previewVehicleRot += 1
     end
 
-    if vehicleSettings.vehicle != nil then
+    if not vehicleSettings.vehicle then
         allOptions.spawnVehicle.visible = true
     end
 
@@ -1512,24 +1593,24 @@ util.create_tick_handler(function()
         var.wheelSlider2.max_value = LSCTable.wheels.sliderMaxValue[wheelTypeList.value]
 
         --Make all lists shown/hidden that not all vehicles have-
-        for i, tbl in modOptions do
-            if tbl.hasNoMods then
-                tbl.option.visible = false
+            for i, tbl in modOptions do
+                if tbl.hasNoMods then
+                    tbl.option.visible = false
+                        if tbl.list != nil then
+                            tbl.list.visible = false
+                        end
+                elseif not tbl.hasNoMods then
+                    tbl.option.visible = true
                     if tbl.list != nil then
-                        tbl.list.visible = false
+                        tbl.list.visible = true
                     end
-            elseif not tbl.hasNoMods then
-                tbl.option.visible = true
-                if tbl.list != nil then
-                    tbl.list.visible = true
                 end
             end
-        end
-
-        --Make all lists shown that all vehicles have--
-        for allOptions as opt do
-            opt.visible = true
-        end
+    
+            --Make all lists shown that all vehicles have--
+            for allOptions as opt do
+                opt.visible = true
+            end
 
         var.carSelected = false
     end
