@@ -9,5 +9,16 @@ Click this button,
 
 Then click this button to download the zip,
 
-![image](https://github.com/NovaPlays134/NovaAutoShop/assets/120801515/1e0b8f27-52f8-449d-91d9-b94a36cb4797)
+![image](https://github.com/NovaPlays134/NovaAutoShop/assets/120801515/cf10eda8-4cb8-4e93-873c-94fb4c431153)
+
+Then unzip the zip you just downloaded, then u will see a file,
+
+![image](https://github.com/NovaPlays134/NovaAutoShop/assets/120801515/55daee9a-cd0d-4afd-bd44-d7a284137a0f)
+
+Drag&Drop or copy this file into the Lua Scripts Folder, you can find this folder by clicking this button on the Stand Launchpad
+
+![image](https://github.com/NovaPlays134/NovaAutoShop/assets/120801515/c2ffac70-aea7-4533-9e5d-10d8046114a0)
+![image](https://github.com/NovaPlays134/NovaAutoShop/assets/120801515/fed61d92-2054-4991-84cd-435c090590db)
+
+
 
