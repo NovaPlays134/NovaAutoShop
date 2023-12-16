@@ -1,4 +1,4 @@
---version 1.0.15
+--version 1.0.16
 --This script is made by Nova
 
 --A script for Stand that allows u to customize, spawn, enjoy any vehicle in GTA V 
@@ -20,7 +20,7 @@ local filePathsTable = {
 local updaterTable = {
     lastCheckTime = nil,
     dayInMilis = 86400000,
-    scriptVersion = "1.0.15",
+    scriptVersion = "1.0.16",
     newVersion = nil,
 }
 
@@ -1159,12 +1159,13 @@ for i, file in savedVehicles do
         local userRotation = GET_ENTITY_ROTATION(players.user_ped(), 0)
         SET_ENTITY_ROTATION(vehicle, 0, 0, userRotation.z, 0, true)
         SET_PED_INTO_VEHICLE(players.user_ped(), vehicle, -1)
+
         util.toast("Successfully spawned vehicle and loaded vehicle settings")
         loadVehicleList:focus()
     end)
 
     action:onFocus(function()
-        getVehicleHashFromFile(file.filePath)
+        readSettingsFromFile(file.filePath)
         var.isFocusedOnVehicle = true
         PreviewVehicle(getVehicleHashFromFile(file.filePath), true, false)
     end)
