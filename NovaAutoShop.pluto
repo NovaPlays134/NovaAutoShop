@@ -1,3 +1,5 @@
+--version 1.12.18
+
 util.require_natives("2944a", "g")
 local scriptsDir = filesystem.scripts_dir()
 local filePathsTable = {
@@ -72,7 +74,11 @@ local function resultStatus(config, result, headers, statusCode, lastcheckTimePa
     elseif not result or result == "" then
         util.toast("Error 3")
         return false
+    elseif not string.startswith(result, "--version") then
+        return false
     end
+    local version = inputString:match("--version%s+(%d+%.%d+%.%d+)")
+    util.toast(version)
     return true
 end
 
