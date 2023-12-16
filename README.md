@@ -20,5 +20,7 @@ Drag&Drop or copy this file into the Lua Scripts Folder, you can find this folde
 ![image](https://github.com/NovaPlays134/NovaAutoShop/assets/120801515/c2ffac70-aea7-4533-9e5d-10d8046114a0)
 ![image](https://github.com/NovaPlays134/NovaAutoShop/assets/120801515/fed61d92-2054-4991-84cd-435c090590db)
 
+When this file is in the Lua Scripts Folder you open stand and you will find the script at ``Stand > Lua Scripts``
+
 
 
