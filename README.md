@@ -1,6 +1,6 @@
 # NovaAutoShop
 A script for Stand that allows u to customize, spawn, enjoy any vehicle in GTA V this script has a special feature that lets u see what ur changing on the vehicle like LSC.
-The script also has a custom made auto updator for the script so the script will check for an update every 24 hours, starting from when u open the script for the first time.
+The script also has a custom made auto updater for the script so the script will check for an update every 24 hours, starting from when u open the script for the first time.
 You can also start a force search for a update.
 
 
