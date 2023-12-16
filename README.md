@@ -1,6 +1,6 @@
 # NovaAutoShop
 A script for Stand that allows u to customize, spawn, enjoy any vehicle in GTA V this script has a special feature that lets u see what ur changing on the vehicle like LSC.
-The script also has a custom made auto updator for the script so the script will check for an update every 24 hours, starting from when u open the script for the first time.
+The script also has a custom made auto updater for the script so the script will check for an update every 24 hours, starting from when u open the script for the first time.
 You can also start a force search for a update.
 
 
@@ -25,5 +25,5 @@ Drag&Drop or copy this file into the Lua Scripts Folder, you can find this folde
 When this file is in the Lua Scripts Folder you open stand and you will find the script at ``Stand > Lua Scripts``, and the installation is complete.
 
 # Big thanks
-Thank you for using this script, i hope you injoy it, you can download my discord server ``https://discord.gg/MDWAeFKPf7``i
+Thank you for using this script, i hope you enjoy it, you can join my discord server here: https://discord.gg/MDWAeFKPf7
 
