@@ -1,4 +1,4 @@
---version 1.0.1
+--version 1.0.2
 --This script is made by Nova
 
 --A script for Stand that allows u to customize, spawn, enjoy any vehicle in GTA V 
@@ -15,11 +15,10 @@ local filePathsTable = {
 
 local updatorTable = {
     lastCheckTime = nil,
-    dayInMilis = 864,
-    scriptVersion = "1.0.1",
+    dayInMilis = 86400000,
+    scriptVersion = "1.0.2",
     newVersion = nil,
 }
-
 
 for i, filePath in filePathsTable do
     if not filesystem.exists(filePath) then
@@ -125,6 +124,7 @@ local function AutoUpdate()
     end
     local lastcheckTimePath = filePathsTable[3]
     if checkForUpdate(lastcheckTimePath) then
+        util.toast("test")
         updateFiles(lastcheckTimePath)
     end
 end
