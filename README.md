@@ -25,5 +25,5 @@ Drag&Drop or copy this file into the Lua Scripts Folder, you can find this folde
 When this file is in the Lua Scripts Folder you open stand and you will find the script at ``Stand > Lua Scripts``, and the installation is complete.
 
 # Big thanks
-Thank you for using this script, i hope you injoy it, you can download my discord server ``https://discord.gg/MDWAeFKPf7``
+Thank you for using this script, i hope you injoy it, you can join my discord server here: ``https://discord.gg/MDWAeFKPf7``
 
