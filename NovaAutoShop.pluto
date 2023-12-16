@@ -1,4 +1,4 @@
---version 1.0.9
+--version 1.0.10
 --This script is made by Nova
 
 --A script for Stand that allows u to customize, spawn, enjoy any vehicle in GTA V 
@@ -20,7 +20,7 @@ local filePathsTable = {
 local updatorTable = {
     lastCheckTime = nil,
     dayInMilis = 86400000,
-    scriptVersion = "1.0.9",
+    scriptVersion = "1.0.10",
     newVersion = nil,
 }
 
@@ -164,6 +164,7 @@ local var = {
     oneTimeLoaded = false,
     wheelType = 0,
     scriptsDir = filesystem.scripts_dir(),
+    lastVehicle = nil,
 }
 
 local vehicleMaxMods = {
@@ -1143,10 +1144,10 @@ end)
 
 
 allOptions.tuningMode = root:toggle("Tuning Mode", {}, "", function(on)
-    local cam, vehicle
     if on then
         var.userPosition = players.get_position(players.user())
         var.userRotation = GET_ENTITY_ROTATION(players.user_ped(), 0)
+        var.lastVehicle = entities.get_user_vehicle_as_handle(false)
 
         var.createdTuneVehicle = entities.create_vehicle(vehicleSettings.vehicle, {x = -211.76971, y = -1323.8885, z = 30.05576}, 0)
         vehicleSpawnValues(var.createdTuneVehicle)
@@ -1165,8 +1166,12 @@ allOptions.tuningMode = root:toggle("Tuning Mode", {}, "", function(on)
         deleteCam(var.createdCam)
         entities.delete(var.createdTuneVehicle)
         var.createdTuneVehicle = nil
-        SET_ENTITY_COORDS(players.user_ped(), var.userPosition.x, var.userPosition.y, var.userPosition.z, false, false, false, false) 
-        SET_ENTITY_ROTATION(players.user_ped(), var.userRotation.x, var.userRotation.y, var.userRotation.z, 0, true)
+        if var.lastVehicle == -1 then
+            SET_ENTITY_COORDS(players.user_ped(), var.userPosition.x, var.userPosition.y, var.userPosition.z, false, false, false, false) 
+            SET_ENTITY_ROTATION(players.user_ped(), var.userRotation.x, var.userRotation.y, var.userRotation.z, 0, true)
+        else
+            SET_PED_INTO_VEHICLE(players.user_ped(), var.lastVehicle, -1)
+        end
         ENABLE_CONTROL_ACTION(0, 79, true)
     end
 end)
@@ -1557,10 +1562,6 @@ util.create_tick_handler(function()
         FREEZE_ENTITY_POSITION(var.createdVehicle, true)
         SET_ENTITY_ALPHA(var.createdVehicle, 200, true)
         var.previewVehicleRot += 1
-    end
-
-    if not vehicleSettings.vehicle then
-        allOptions.spawnVehicle.visible = true
     end
 
     if IS_DISABLED_CONTROL_PRESSED(0, 79) then
