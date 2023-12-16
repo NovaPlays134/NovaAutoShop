@@ -1,10 +1,13 @@
---version 1.0.5
+--version 1.0.6
 --This script is made by Nova
 
 --A script for Stand that allows u to customize, spawn, enjoy any vehicle in GTA V 
 --this script has a special feature that lets u see what ur changing on the vehicle like LSC.
 
+util.keep_running()
 util.require_natives("2944a", "g")
+local root = menu.my_root()
+
 local scriptsDir = filesystem.scripts_dir()
 local filePathsTable = {
     $"{scriptsDir}/lib/NovaAutoShop",
@@ -13,14 +16,14 @@ local filePathsTable = {
     $"{scriptsDir}/lib/NovaAutoShop/excludes/scriptVersion.txt",
 }
 
+--AUTO UPDATOR--
 local updatorTable = {
     lastCheckTime = nil,
     dayInMilis = 86400000,
-    scriptVersion = "1.0.5",
+    scriptVersion = "1.0.6",
     newVersion = nil,
 }
 
-local root = menu.my_root()
 
 for i, filePath in filePathsTable do
     if not filesystem.exists(filePath) then
@@ -40,9 +43,6 @@ for i, filePath in filePathsTable do
     end
 end
 
-util.keep_running()
-
---AUTO UPDATOR--
 local function hasInternetAccess()
     return not async_http.have_access()
 end
