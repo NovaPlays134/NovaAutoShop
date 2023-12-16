@@ -77,7 +77,7 @@ local function resultStatus(config, result, headers, statusCode, lastcheckTimePa
     elseif not string.startswith(result, "--version") then
         return false
     end
-    local version = inputString:match("--version%s+(%d+%.%d+%.%d+)")
+    local version = result:match("--version%s+(%d+%.%d+%.%d+)")
     util.toast(version)
     return true
 end
