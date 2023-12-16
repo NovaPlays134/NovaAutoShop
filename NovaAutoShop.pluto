@@ -1,3 +1,5 @@
+----YO--
+
 util.require_natives("2944a", "g")
 local scriptsDir = filesystem.scripts_dir()
 local filePathsTable = {
